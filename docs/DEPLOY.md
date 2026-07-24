@@ -1,0 +1,61 @@
+# Deploy Guide — Asisten Mama
+
+Zero-budget stack, same as the cooking-mama-git prototype: Render + Neon + Groq.
+
+## Prerequisites
+- Neon PostgreSQL account (free tier): https://neon.tech
+- Render account: https://render.com
+- Groq API key: https://console.groq.com
+
+## Steps
+
+### 1. Create Neon Database
+1. Sign up at neon.tech, create a new project.
+2. Copy the `DATABASE_URL` connection string (postgres://...).
+3. Neon free tier sleeps after 5 min inactivity — first request after sleep takes ~2-3 seconds.
+
+### 2. Deploy to Render
+1. Create a new **Web Service**, connect this repo's `deploy-main` branch.
+2. **Runtime**: Docker (uses the `Dockerfile` at the repo root — the `production` stage).
+3. **Instance type**: Free.
+4. Add all environment variables from the table below.
+5. Deploy. Container boot runs `migrate --force` → seeds the shared recipe catalog
+   (`db:seed --class=RecipeSeeder --force`) → `config:cache` → serves on `$PORT`.
+   Idempotent, safe on every redeploy.
+
+### 3. Environment Variables
+
+| Variable | Value |
+|---|---|
+| `APP_ENV` | `production` |
+| `APP_DEBUG` | `false` |
+| `APP_URL` | Your Render service URL |
+| `APP_KEY` | `php artisan key:generate --show` locally |
+| `DB_CONNECTION` | `pgsql` |
+| `DATABASE_URL` | From Neon dashboard |
+| `GROQ_API_KEY` | From console.groq.com |
+| `SESSION_DRIVER` | `database` |
+| `CACHE_STORE` | `database` |
+
+No `ADMIN_EMAIL`/`ADMIN_PASSWORD` — there's no seeded admin account; real users register via
+`/admin/register`, which creates their household automatically.
+
+### 4. Verify Deploy
+- `/` — recipe finder loads, seeded recipes visible.
+- `/admin/register` — sign up, confirm redirect into a working household-scoped session.
+- `/shopping-list`, `/finance` — accessible once logged in, empty-state renders correctly.
+- `/manifest.json` — valid JSON; try "Add to Home Screen" on mobile.
+- `/admin` — Filament panel loads, Recipes resource visible (registered via `CookingPanelPlugin`).
+
+## Free-Tier Limits to Watch
+- **Neon**: 512MB storage, compute sleeps after 5 min idle.
+- **Render free**: spins down after 15 min inactivity (cold start on next request); local
+  filesystem is ephemeral — recipe images uploaded via `/admin` are lost on redeploy/restart
+  unless moved to external storage (S3, Cloudinary, etc.) — not solved yet, see `docs/ROADMAP.md`.
+- **Groq API**: free-tier rate limit; AI recipe suggestions are cached 6 hours per unique
+  ingredient set to stay well under it.
+
+## Local development
+`docker compose up` — runs a local Postgres (host port `5433`, remapped because port `5432` may
+already be in use by another local Postgres container) plus an app container that installs
+dependencies and serves on `localhost:8000`. See `docker-compose.yml`.
