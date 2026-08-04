@@ -5,9 +5,11 @@ namespace App\Modules\Cooking\Support;
 class RecipeSteps
 {
     /**
-     * Single guardrail for the `steps` JSON shape: always a list of clean,
-     * non-empty step strings. Accepts an array (AI parser, seeder) or a
-     * string (Filament textarea, backfill) so every write path funnels here.
+     * Single guardrail for the `steps` JSON shape: always a list of
+     * {text, duration_minutes} entries. Accepts a string (Filament textarea,
+     * one line per step, no duration), an array of plain strings (seeder,
+     * legacy AI shape), or an array of {text, duration_minutes} objects (AI),
+     * so every write path funnels here.
      */
     public static function normalize(mixed $value): array
     {
@@ -23,10 +25,23 @@ class RecipeSteps
             return [];
         }
 
-        return array_values(array_filter(array_map(
+        $steps = [];
+        foreach ($parts as $part) {
+            $raw = is_array($part) ? ($part['text'] ?? '') : $part;
             // drop leading "1." / "2)" numbering, then trim
-            fn ($p) => trim(preg_replace('/^\s*\d+[.)]\s*/', '', (string) $p)),
-            $parts
-        ), fn ($p) => $p !== ''));
+            $text = trim(preg_replace('/^\s*\d+[.)]\s*/', '', (string) $raw));
+            if ($text === '') {
+                continue;
+            }
+
+            $duration = null;
+            if (is_array($part) && isset($part['duration_minutes']) && $part['duration_minutes'] !== '') {
+                $duration = (int) $part['duration_minutes'];
+            }
+
+            $steps[] = ['text' => $text, 'duration_minutes' => $duration];
+        }
+
+        return $steps;
     }
 }

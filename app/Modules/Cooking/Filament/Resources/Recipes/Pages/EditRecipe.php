@@ -16,4 +16,21 @@ class EditRecipe extends EditRecord
             DeleteAction::make(),
         ];
     }
+
+    protected function mutateFormDataBeforeSave(array $data): array
+    {
+        return RecipeResource::normalizeNutrition($data);
+    }
+
+    protected function afterSave(): void
+    {
+        RecipeResource::syncPrimaryIngredients(
+            $this->record,
+            $this->data['primary_ingredient_ids'] ?? []
+        );
+        RecipeResource::syncIngredientQuantities(
+            $this->record,
+            $this->data['ingredient_quantities'] ?? []
+        );
+    }
 }

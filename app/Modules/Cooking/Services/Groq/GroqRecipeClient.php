@@ -14,18 +14,18 @@ class GroqRecipeClient implements AiRecipeClient
 {
     public function __construct(private AiResponseParser $parser = new AiResponseParser) {}
 
-    public function suggest(array $ingredientNames): array
+    public function suggest(array $ingredientNames, array $mealCategories = [], array $cuisineTypes = []): array
     {
-        $key = 'groq:v1:'.md5(collect($ingredientNames)
+        $key = 'groq:v3:'.md5(collect($ingredientNames)
             ->map(fn ($n) => IngredientNormalizer::normalize($n))
-            ->sort()->implode('|'));
+            ->sort()->implode('|').'|'.collect($mealCategories)->sort()->implode(',').'|'.collect($cuisineTypes)->sort()->implode(','));
 
-        return Cache::remember($key, now()->addHours(6), function () use ($ingredientNames) {
-            return $this->callGroq($ingredientNames);
+        return Cache::remember($key, now()->addHours(6), function () use ($ingredientNames, $mealCategories, $cuisineTypes) {
+            return $this->callGroq($ingredientNames, $mealCategories, $cuisineTypes);
         });
     }
 
-    private function callGroq(array $ingredientNames): array
+    private function callGroq(array $ingredientNames, array $mealCategories, array $cuisineTypes): array
     {
         $endpoint = config('services.groq.endpoint');
         $key = config('services.groq.key');
@@ -38,7 +38,7 @@ class GroqRecipeClient implements AiRecipeClient
             ->withToken($key)
             ->post($endpoint, [
                 'model' => $model,
-                'messages' => [['role' => 'user', 'content' => RecipePrompt::build($ingredientNames)]],
+                'messages' => [['role' => 'user', 'content' => RecipePrompt::build($ingredientNames, $mealCategories, $cuisineTypes)]],
                 'max_tokens' => 4000,
             ]);
 

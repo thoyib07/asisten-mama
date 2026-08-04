@@ -15,20 +15,28 @@ class Recipe extends Model
 
     public const SOURCE_AI = 'ai';
 
-    protected $fillable = ['name', 'steps', 'image_url', 'source', 'servings'];
+    protected $fillable = ['name', 'steps', 'image_url', 'source', 'servings', 'duration_minutes', 'nutrition', 'meal_categories', 'cuisine_type'];
+
+    protected $casts = ['nutrition' => 'array', 'meal_categories' => 'array'];
 
     protected function steps(): Attribute
     {
-        // every write path (Filament string, AI array, seeder) normalizes here
+        // every write path (Filament string, AI array, seeder) normalizes here,
+        // so only writes go through RecipeSteps::normalize(). Reads stay a thin
+        // decode + a legacy shim for rows stored before {text, duration_minutes}
+        // existed (plain string steps, no backfill — see docs/prd/cooking.md §7).
         return Attribute::make(
-            get: fn ($value) => json_decode($value ?? '[]', true) ?: [],
+            get: fn ($value) => array_map(
+                fn ($step) => is_array($step) ? $step : ['text' => $step, 'duration_minutes' => null],
+                json_decode($value ?? '[]', true) ?: []
+            ),
             set: fn ($value) => json_encode(RecipeSteps::normalize($value)),
         );
     }
 
     public function ingredients(): BelongsToMany
     {
-        return $this->belongsToMany(Ingredient::class, 'recipe_ingredient')->withPivot('quantity');
+        return $this->belongsToMany(Ingredient::class, 'recipe_ingredient')->withPivot('quantity', 'is_primary');
     }
 
     public function ratings(): HasMany

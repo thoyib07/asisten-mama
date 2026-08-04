@@ -26,16 +26,15 @@ class RecipeRating extends Component
 
     public function rate(int $value): void
     {
-        if (! auth()->check() || $this->hasRated) {
+        if (! auth()->check()) {
             return;
         }
 
         $value = max(1, min(5, $value));
-        Rating::create([
-            'recipe_id' => $this->recipe->id,
-            'value' => $value,
-            'user_id' => auth()->id(),
-        ]);
+        Rating::updateOrCreate(
+            ['recipe_id' => $this->recipe->id, 'user_id' => auth()->id()],
+            ['value' => $value],
+        );
         $this->hasRated = true;
         $this->refreshStats();
     }

@@ -7,7 +7,11 @@ use App\Modules\Cooking\Support\IngredientNormalizer;
 
 class RecipeMatcher
 {
-    public function search(array $rawIngredientNames): array
+    private const PRIMARY_WEIGHT = 2;
+
+    private const SECONDARY_WEIGHT = 1;
+
+    public function search(array $rawIngredientNames, array $mealCategories = [], array $cuisineTypes = []): array
     {
         $have = collect($rawIngredientNames)
             ->map(fn ($n) => IngredientNormalizer::normalize($n))
@@ -19,17 +23,44 @@ class RecipeMatcher
             return [];
         }
 
+        $query = Recipe::with('ingredients')->has('ingredients');
+
+        if ($mealCategories !== []) {
+            $query->where(function ($q) use ($mealCategories) {
+                foreach ($mealCategories as $category) {
+                    $q->orWhereJsonContains('meal_categories', $category);
+                }
+            });
+        }
+
+        if ($cuisineTypes !== []) {
+            $query->whereIn('cuisine_type', $cuisineTypes);
+        }
+
         $results = [];
-        $recipes = Recipe::with('ingredients')->has('ingredients')->get();
 
-        foreach ($recipes as $recipe) {
-            $names = $recipe->ingredients->pluck('name');
-            $total = $names->count();
-            $matched = $names->filter(fn ($n) => $have->contains($n))->values();
-            $missing = $names->reject(fn ($n) => $have->contains($n))->values();
-            $score = $total > 0 ? round($matched->count() / $total, 4) : 0.0;
+        foreach ($query->get() as $recipe) {
+            $ingredients = $recipe->ingredients;
+            $totalWeight = 0;
+            $matchedWeight = 0;
+            $matched = [];
+            $missing = [];
 
-            $results[] = new MatchResult($recipe, $score, $matched->all(), $missing->all());
+            foreach ($ingredients as $ingredient) {
+                $weight = $ingredient->pivot->is_primary ? self::PRIMARY_WEIGHT : self::SECONDARY_WEIGHT;
+                $totalWeight += $weight;
+
+                if ($have->contains($ingredient->name)) {
+                    $matchedWeight += $weight;
+                    $matched[] = $ingredient->name;
+                } else {
+                    $missing[] = $ingredient->name;
+                }
+            }
+
+            $score = $totalWeight > 0 ? round($matchedWeight / $totalWeight, 4) : 0.0;
+
+            $results[] = new MatchResult($recipe, $score, $matched, $missing);
         }
 
         usort($results, fn ($a, $b) => $b->score <=> $a->score ?: count($a->missing) <=> count($b->missing));

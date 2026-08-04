@@ -32,11 +32,48 @@ class AiResponseParser
 
             return [
                 'name' => (string) $r['name'],
-                'ingredients' => array_values(array_map('strval', $r['ingredients'])),
-                'steps' => array_values(array_map('strval', $r['steps'])),
+                'ingredients' => array_values(array_map(function ($ing) {
+                    if (! is_array($ing) || ! isset($ing['name'])) {
+                        throw new InvalidArgumentException('Recipe ingredient entry missing name.');
+                    }
+
+                    return [
+                        'name' => (string) $ing['name'],
+                        'is_primary' => (bool) ($ing['is_primary'] ?? false),
+                        'quantity' => (isset($ing['quantity']) && $ing['quantity'] !== '') ? (string) $ing['quantity'] : null,
+                    ];
+                }, $r['ingredients'])),
+                'steps' => array_values(array_map(function ($step) {
+                    $text = trim((string) (is_array($step) ? ($step['text'] ?? '') : $step));
+                    if ($text === '') {
+                        throw new InvalidArgumentException('Recipe step entry missing text.');
+                    }
+
+                    $duration = is_array($step) && isset($step['duration_minutes']) && $step['duration_minutes'] !== null && $step['duration_minutes'] !== ''
+                        ? (int) $step['duration_minutes']
+                        : null;
+
+                    return ['text' => $text, 'duration_minutes' => $duration];
+                }, $r['steps'])),
                 'servings' => isset($r['servings']) ? (int) $r['servings'] : null,
+                'duration_minutes' => (isset($r['duration_minutes']) && $r['duration_minutes'] !== '') ? (int) $r['duration_minutes'] : null,
+                'nutrition' => $this->parseNutrition($r['nutrition'] ?? null),
             ];
         }, $recipes);
+    }
+
+    private function parseNutrition(mixed $nutrition): ?array
+    {
+        if (! is_array($nutrition)) {
+            return null;
+        }
+
+        $result = [];
+        foreach (['calories', 'protein', 'carbs', 'fat'] as $field) {
+            $result[$field] = (isset($nutrition[$field]) && $nutrition[$field] !== '') ? (int) $nutrition[$field] : null;
+        }
+
+        return array_filter($result, fn ($v) => $v !== null) === [] ? null : $result;
     }
 
     /**

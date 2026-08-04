@@ -27,6 +27,14 @@
                         🍽️ {{ $recipe->servings }} porsi
                     </span>
                 @endif
+                @if ($recipe->duration_minutes)
+                    <span class="mt-1 inline-block rounded-full bg-stone-100 px-3 py-0.5 text-xs text-stone-500">
+                        ⏱️ {{ $recipe->duration_minutes }} menit
+                    </span>
+                @endif
+                @if ($recipe->source === 'ai')
+                    <p class="mt-1 text-xs text-orange-500">✨ Resep dari AI — cek kematangan &amp; kebersihan sendiri.</p>
+                @endif
             </div>
             @auth
                 @livewire('cooking::favorite-button', ['recipeId' => $recipe->id])
@@ -40,6 +48,9 @@
                 @foreach ($recipe->ingredients as $ingredient)
                     <span class="rounded-lg bg-stone-100 px-3 py-1 text-sm text-stone-700">
                         {{ $ingredient->name }}
+                        @if ($ingredient->pivot->quantity)
+                            <span class="text-stone-400">— {{ $ingredient->pivot->quantity }}</span>
+                        @endif
                     </span>
                 @endforeach
             </div>
@@ -54,11 +65,42 @@
                         <span class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-green-700 text-xs font-bold text-white">
                             {{ $index + 1 }}
                         </span>
-                        <span class="text-sm leading-relaxed text-stone-700">{{ $step }}</span>
+                        <span class="text-sm leading-relaxed text-stone-700">
+                            {{ $step['text'] }}
+                            @if ($step['duration_minutes'])
+                                <span class="ml-1 inline-block rounded-full bg-stone-100 px-2 py-0.5 text-xs text-stone-500">~{{ $step['duration_minutes'] }} menit</span>
+                            @endif
+                        </span>
                     </li>
                 @endforeach
             </ol>
         </section>
+
+        {{-- Nilai gizi (perkiraan) --}}
+        @if (collect($recipe->nutrition ?? [])->filter(fn ($v) => $v !== null)->isNotEmpty())
+            <section>
+                <h2 class="mb-2 font-bold text-stone-700">Perkiraan Nilai Gizi</h2>
+                <p class="mb-2 text-xs text-stone-400">Estimasi kasar untuk keseluruhan resep, bukan hasil hitungan presisi.</p>
+                <div class="grid grid-cols-4 gap-2">
+                    <div class="rounded-lg bg-stone-100 py-2 text-center">
+                        <span class="block text-sm font-bold text-stone-700">{{ $recipe->nutrition['calories'] ?? '–' }}</span>
+                        <span class="block text-xs text-stone-400">kkal</span>
+                    </div>
+                    <div class="rounded-lg bg-stone-100 py-2 text-center">
+                        <span class="block text-sm font-bold text-stone-700">{{ $recipe->nutrition['protein'] ?? '–' }}</span>
+                        <span class="block text-xs text-stone-400">protein (g)</span>
+                    </div>
+                    <div class="rounded-lg bg-stone-100 py-2 text-center">
+                        <span class="block text-sm font-bold text-stone-700">{{ $recipe->nutrition['carbs'] ?? '–' }}</span>
+                        <span class="block text-xs text-stone-400">karbo (g)</span>
+                    </div>
+                    <div class="rounded-lg bg-stone-100 py-2 text-center">
+                        <span class="block text-sm font-bold text-stone-700">{{ $recipe->nutrition['fat'] ?? '–' }}</span>
+                        <span class="block text-xs text-stone-400">lemak (g)</span>
+                    </div>
+                </div>
+            </section>
+        @endif
 
         {{-- Rating --}}
         @auth

@@ -11,7 +11,7 @@
             wire:model="newIngredient"
             placeholder="Tambah bahan... (misal: telur)"
             aria-label="Nama bahan"
-            class="flex-1 rounded-xl border border-stone-200 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-600 placeholder-stone-400"
+            class="flex-1 rounded-xl border border-stone-200 bg-white px-4 py-3 text-sm text-stone-800 focus:outline-none focus:ring-2 focus:ring-green-600 placeholder-stone-400"
         >
         <button
             type="submit"
@@ -36,6 +36,28 @@
         @endforeach
     </div>
     @endif
+
+    {{-- Filter kategori makan & jenis masakan (opsional) --}}
+    <div class="space-y-2">
+        <p class="text-xs font-semibold text-stone-500">Kategori makan (opsional)</p>
+        <div class="flex flex-wrap gap-2">
+            @foreach (\App\Modules\Cooking\Support\RecipeTaxonomy::MEAL_CATEGORIES as $value => $label)
+                <label class="inline-flex cursor-pointer items-center gap-1 rounded-full border border-stone-200 bg-white px-3 py-1 text-xs font-medium text-stone-600 has-[:checked]:border-green-600 has-[:checked]:bg-green-50 has-[:checked]:text-green-800">
+                    <input type="checkbox" wire:model="selectedMealCategories" value="{{ $value }}" class="sr-only">
+                    {{ $label }}
+                </label>
+            @endforeach
+        </div>
+        <p class="text-xs font-semibold text-stone-500">Jenis masakan (opsional)</p>
+        <div class="flex flex-wrap gap-2">
+            @foreach (\App\Modules\Cooking\Support\RecipeTaxonomy::CUISINE_TYPES as $value => $label)
+                <label class="inline-flex cursor-pointer items-center gap-1 rounded-full border border-stone-200 bg-white px-3 py-1 text-xs font-medium text-stone-600 has-[:checked]:border-green-600 has-[:checked]:bg-green-50 has-[:checked]:text-green-800">
+                    <input type="checkbox" wire:model="selectedCuisineTypes" value="{{ $value }}" class="sr-only">
+                    {{ $label }}
+                </label>
+            @endforeach
+        </div>
+    </div>
 
     {{-- Tombol cari --}}
     <button
@@ -85,6 +107,9 @@
                             </div>
                             @if (!empty($r['missing']))
                                 <p class="mt-1 text-xs text-stone-400">Kurang: {{ implode(', ', $r['missing']) }}</p>
+                            @endif
+                            @if ($r['source'] === 'ai')
+                                <p class="mt-1 text-xs text-orange-500">✨ Resep dari AI — cek kematangan &amp; kebersihan sendiri.</p>
                             @endif
                         </a>
                         @auth

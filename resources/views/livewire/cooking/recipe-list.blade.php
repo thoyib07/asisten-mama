@@ -4,7 +4,7 @@
         wire:model.live.debounce.400ms="search"
         placeholder="Cari nama resep..."
         aria-label="Cari resep"
-        class="w-full rounded-xl border border-stone-200 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-600 placeholder-stone-400"
+        class="w-full rounded-xl border border-stone-200 bg-white px-4 py-3 text-sm text-stone-800 focus:outline-none focus:ring-2 focus:ring-green-600 placeholder-stone-400"
     >
 
     @unless ($lockFavoritesFilter)

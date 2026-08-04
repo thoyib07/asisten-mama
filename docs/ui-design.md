@@ -115,7 +115,19 @@ Card dasar (`--surface` di atas `--bg`), border 1px `--rule`, radius kecil (4–
 struktur nav 3-slot, kartu kantong, kartu indeks.
 
 **🔜 Menyusul saat implementasi — per modul, urutan mengikuti kapan modulnya digarap:**
-- Redesain layar `RecipeFinder`/`RecipeList` (Cooking) ke sistem ini.
+- **Cooking — prioritas berikutnya (2026-08-05):** implementasi fitur modul Cooking (`RecipeFinder`,
+  `RecipeList`, `recipes/show`, dll) sudah selesai, jadi ini modul pertama yang siap masuk fase
+  redesain sesuai §6 (aturan "redesain menyusul saat implementasi"). Motivasi konkret yang baru
+  muncul: blade Cooking masih pakai palet Tailwind lama (`bg-white`/`stone-*`/`green-700`) yang
+  **tidak ikut skema dark-mode** `docs/ui-design.md` §2 — sementara `<body>` (`layout.blade.php`)
+  sudah pakai token `--ink`/`--bg` yang otomatis berganti gelap/terang. Akibatnya teks di kotak
+  input/select Cooking nyaris tak terbaca di dark mode (ditemukan user 2026-08-05, tambal-sulam
+  darurat: nambah `text-stone-800` eksplisit — **bukan** perbaikan permanen, cuma supaya kebaca
+  sampai redesain penuh ke token `--surface`/`--ink`/`--rule` dst dikerjakan). Redesain penuh perlu
+  mencakup: form `RecipeFinder` (input bahan, filter kategori/cuisine, tombol AI), kartu hasil
+  pencarian, `RecipeList`/`FavoritesList`, halaman detail `recipes/show` (termasuk badge stempel
+  "BARU" utk resep AI sesuai §4, badge durasi/gizi/gramasi yang baru ditambahkan), dan
+  `recipe-rating`.
 - Redesain `ShoppingListPage` ke sistem ini (termasuk kartu item, badge assign, dll dari
   `shopping-list.md`).
 - Redesain `FinancePage` + halaman baru "Kelola Kantong" (dari `finance.md` §15) ke sistem ini —
@@ -135,3 +147,4 @@ dokumen ini (file mockup asli ada di scratchpad sesi, sifatnya sementara).
 | Tanggal | Perubahan |
 |---|---|
 | 2026-07-30 | Draf arah desain "Buku Catatan Rumah Tangga" disetujui setelah 3 iterasi mockup: (v1) konsep dasar kraft/tinta-teal/stempel; (v2) Beranda diubah dari daftar-isi vertikal jadi grid ala ShopeePay + tombol Cari timbul di tengah nav + avatar anggota ala Cozi; (v3) nav bar disederhanakan jadi 3 slot non-duplikatif (Beranda/Cari/Keluarga), modul "Rumah Tangga" dipindah dari grid ke nav sebagai "Keluarga". Redesain per-modul (Cooking/ShoppingList/Finance/Beranda/Keluarga) sengaja **ditunda ke fase implementasi masing-masing**, dicatat sebagai reminder (§6). |
+| 2026-08-05 | User menemukan bug kontras teks di form Cooking pada dark mode, lalu mengaitkannya dengan pertanyaan apakah sistem terang/gelap sudah ada. **Klarifikasi:** sistem terang/gelap **sudah** dirancang & disetujui sejak 2026-07-30 (§2) — bug-nya bukan karena konsepnya belum ada, tapi karena blade Cooking belum dimigrasikan ke token itu (masih Tailwind default `bg-white`/`stone`). §6 diperkuat: Cooking ditandai sebagai modul **prioritas berikutnya** untuk redesain, karena implementasi fiturnya sudah selesai (syarat "menyusul saat implementasi" di §6 sudah terpenuhi). Perbaikan `text-stone-800` yang ditambahkan saat itu ditandai eksplisit sebagai tambal-sulam sementara, bukan solusi akhir. |

@@ -5,6 +5,7 @@ namespace App\Modules\Cooking\Livewire;
 use App\Modules\Cooking\Services\Ai\AiRecipeClient;
 use App\Modules\Cooking\Services\Ai\AiRecipeImporter;
 use App\Modules\Cooking\Services\Ai\IngredientValidator;
+use App\Modules\Cooking\Services\AiQuotaGuard;
 use App\Modules\Cooking\Services\Matching\RecipeMatcher;
 use App\Modules\Cooking\Support\IngredientCatalog;
 use App\Modules\Cooking\Support\IngredientNormalizer;
@@ -30,6 +31,10 @@ class RecipeFinder extends Component
     public ?string $aiNotice = null;
 
     public ?string $ingredientError = null;
+
+    public array $selectedMealCategories = [];
+
+    public array $selectedCuisineTypes = [];
 
     public function addIngredient(): void
     {
@@ -62,10 +67,15 @@ class RecipeFinder extends Component
     public function search(RecipeMatcher $matcher): void
     {
         $this->searched = true;
-        $this->results = collect($matcher->search($this->ingredients))
+        $this->results = collect($matcher->search(
+            $this->ingredients,
+            $this->selectedMealCategories,
+            $this->selectedCuisineTypes,
+        ))
             ->map(fn ($m) => [
                 'id' => $m->recipe->id,
                 'name' => $m->recipe->name,
+                'source' => $m->recipe->source,
                 'score' => $m->score,
                 'matched' => $m->matched,
                 'missing' => $m->missing,
@@ -76,7 +86,8 @@ class RecipeFinder extends Component
         AiRecipeClient $client,
         AiRecipeImporter $importer,
         RecipeMatcher $matcher,
-        IngredientValidator $validator
+        IngredientValidator $validator,
+        AiQuotaGuard $quotaGuard
     ): void {
         $this->aiError = null;
         $this->aiNotice = null;
@@ -97,8 +108,15 @@ class RecipeFinder extends Component
                 return;
             }
 
-            $suggestions = $client->suggest($plausible->all());
-            $importer->importMany($suggestions);
+            $quotaError = $quotaGuard->check(auth()->user()?->current_household_id);
+            if ($quotaError !== null) {
+                $this->aiError = $quotaError;
+
+                return;
+            }
+
+            $suggestions = $client->suggest($plausible->all(), $this->selectedMealCategories, $this->selectedCuisineTypes);
+            $importer->importMany($suggestions, $this->selectedMealCategories, $this->selectedCuisineTypes);
             $this->search($matcher);
         } catch (\Throwable $e) {
             report($e);
