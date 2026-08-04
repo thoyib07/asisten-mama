@@ -1,18 +1,8 @@
 <?php
 
-use App\Models\Household;
-use App\Models\User;
 use App\Modules\Finance\Models\Category;
 use App\Modules\Finance\Models\Transaction;
 use App\Modules\ShoppingList\Models\ShoppingList;
-
-function makeHouseholdUser(string $name): User
-{
-    $user = User::factory()->create(['name' => $name]);
-    Household::createWithOwner($user, "Keluarga {$name}");
-
-    return $user->fresh();
-}
 
 it('creates a household with default categories when a user registers', function () {
     $user = makeHouseholdUser('Andi');

@@ -9,8 +9,10 @@ use App\Modules\Cooking\Services\Matching\RecipeMatcher;
 use App\Modules\Cooking\Support\IngredientCatalog;
 use App\Modules\Cooking\Support\IngredientNormalizer;
 use App\Modules\Cooking\Support\IngredientPlausibility;
+use Livewire\Attributes\Layout;
 use Livewire\Component;
 
+#[Layout('components.layout')]
 class RecipeFinder extends Component
 {
     public array $ingredients = [];

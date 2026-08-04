@@ -7,3 +7,79 @@
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
 }
+
+/* Buku Catatan Rumah Tangga design tokens — docs/ui-design.md §2.
+   Plain :root (not Tailwind's @theme) so [data-theme] can override at runtime;
+   @theme values get inlined into generated utility CSS at build time instead. */
+:root {
+    --bg: #EAE3CE;
+    --surface: #F8F2E6;
+    --surface-alt: #F1E9D6;
+    --ink: #2B211A;
+    --ink-soft: #6B5F4E;
+    --accent: #1F5D52;
+    --stamp: #A8432C;
+    --rule: #C9BC9C;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #1B1712;
+        --surface: #262019;
+        --surface-alt: #2E271D;
+        --ink: #EDE4D0;
+        --ink-soft: #B3A68C;
+        --accent: #4FA090;
+        --stamp: #D97452;
+        --rule: #4A4030;
+    }
+}
+
+:root[data-theme="dark"] {
+    --bg: #1B1712;
+    --surface: #262019;
+    --surface-alt: #2E271D;
+    --ink: #EDE4D0;
+    --ink-soft: #B3A68C;
+    --accent: #4FA090;
+    --stamp: #D97452;
+    --rule: #4A4030;
+}
+
+:root[data-theme="light"] {
+    --bg: #EAE3CE;
+    --surface: #F8F2E6;
+    --surface-alt: #F1E9D6;
+    --ink: #2B211A;
+    --ink-soft: #6B5F4E;
+    --accent: #1F5D52;
+    --stamp: #A8432C;
+    --rule: #C9BC9C;
+}
+
+.bg-app { background-color: var(--bg); }
+.bg-surface { background-color: var(--surface); }
+.bg-surface-alt { background-color: var(--surface-alt); }
+.text-ink { color: var(--ink); }
+.text-ink-soft { color: var(--ink-soft); }
+.text-accent { color: var(--accent); }
+.bg-accent { background-color: var(--accent); }
+.border-rule { border-color: var(--rule); }
+
+/* Per-module colors — docs/ui-design.md §2.1. Reused identically by the Beranda
+   grid tiles and member avatars (one color system, not two palettes). */
+.mod-resep { background-color: #A9812F; }
+.mod-belanja { background-color: #1F5D52; }
+.mod-keuangan { background-color: #A8432C; }
+.mod-langganan { background-color: #6B5F4E; }
+.mod-rumahtangga { background-color: #3F6B8A; }
+.mod-inventaris { background-color: #8A8072; }
+
+@media (prefers-color-scheme: dark) {
+    .mod-resep { background-color: #CDA54C; }
+    .mod-belanja { background-color: #4FA090; }
+    .mod-keuangan { background-color: #D97452; }
+    .mod-langganan { background-color: #B3A68C; }
+    .mod-rumahtangga { background-color: #6EA0C2; }
+    .mod-inventaris { background-color: #A69A86; }
+}

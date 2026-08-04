@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\Household;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -44,7 +46,10 @@ expect()->extend('toBeOne', function () {
 |
 */
 
-function something()
+function makeHouseholdUser(string $name): User
 {
-    // ..
+    $user = User::factory()->create(['name' => $name]);
+    Household::createWithOwner($user, "Keluarga {$name}");
+
+    return $user->fresh();
 }
