@@ -44,11 +44,10 @@
             <span class="bg-accent flex h-12 w-12 items-center justify-center rounded-full text-xl text-white shadow-md {{ request()->routeIs('cooking.cari') ? 'ring-2 ring-offset-2 ring-accent' : '' }}">🔍</span>
             <span class="text-ink-soft">Cari</span>
         </a>
-        {{-- Halaman Keluarga/User belum dibangun — nonaktif dulu, bukan route mati --}}
-        <span class="flex flex-col items-center gap-0.5 text-xs text-ink-soft opacity-40">
+        <a wire:navigate href="{{ route('household.index') }}" class="flex flex-col items-center gap-0.5 text-xs {{ request()->routeIs('household.index') ? 'text-accent font-semibold' : 'text-ink-soft' }}">
             <span class="text-xl">👨‍👩‍👧</span>
             <span>Keluarga</span>
-        </span>
+        </a>
     </nav>
 
     @livewireScripts

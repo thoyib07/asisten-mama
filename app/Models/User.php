@@ -38,6 +38,13 @@ class User extends Authenticatable implements FilamentUser
         return $this->belongsTo(Household::class, 'current_household_id');
     }
 
+    public function avatarColorClass(): string
+    {
+        $classes = ['mod-resep', 'mod-belanja', 'mod-keuangan', 'mod-langganan', 'mod-rumahtangga', 'mod-inventaris'];
+
+        return $classes[$this->id % count($classes)];
+    }
+
     /**
      * Get the attributes that should be cast.
      *

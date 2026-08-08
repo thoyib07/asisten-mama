@@ -65,6 +65,8 @@
 .text-accent { color: var(--accent); }
 .bg-accent { background-color: var(--accent); }
 .border-rule { border-color: var(--rule); }
+.text-stamp { color: var(--stamp); }
+.border-stamp { border-color: var(--stamp); }
 
 /* Per-module colors — docs/ui-design.md §2.1. Reused identically by the Beranda
    grid tiles and member avatars (one color system, not two palettes). */

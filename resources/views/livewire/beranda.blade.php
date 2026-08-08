@@ -9,7 +9,7 @@
             <div class="flex -space-x-2">
                 @foreach ($members as $member)
                     <div
-                        class="{{ $this->memberColorClass($member) }} flex h-9 w-9 items-center justify-center rounded-full border-2 border-surface text-xs font-bold text-white"
+                        class="{{ $member->avatarColorClass() }} flex h-9 w-9 items-center justify-center rounded-full border-2 border-surface text-xs font-bold text-white"
                         title="{{ $member->name }}"
                     >
                         {{ mb_strtoupper(mb_substr($member->name, 0, 1)) }}

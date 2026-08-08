@@ -2,7 +2,6 @@
 
 namespace App\Livewire;
 
-use App\Models\User;
 use App\Modules\Cooking\Models\Recipe;
 use App\Modules\ShoppingList\Models\ShoppingListItem;
 use Livewire\Attributes\Layout;
@@ -37,12 +36,5 @@ class Beranda extends Component
             $hour < 18 => 'Selamat sore',
             default => 'Selamat malam',
         };
-    }
-
-    public function memberColorClass(User $user): string
-    {
-        $classes = ['mod-resep', 'mod-belanja', 'mod-keuangan', 'mod-langganan', 'mod-rumahtangga', 'mod-inventaris'];
-
-        return $classes[$user->id % count($classes)];
     }
 }
