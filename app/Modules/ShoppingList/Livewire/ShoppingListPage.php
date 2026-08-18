@@ -45,7 +45,8 @@ class ShoppingListPage extends Component
 
     public function render()
     {
-        $items = $this->currentList()->items()->orderBy('is_checked')->orderByDesc('id')->get();
+        $items = $this->currentList()->items()->with('addedBy')
+            ->orderBy('is_checked')->orderByDesc('id')->get();
 
         return view('livewire.shopping-list.shopping-list-page', ['items' => $items]);
     }

@@ -1,150 +1,212 @@
 # UI Design
 
-> Arah visual "Buku Catatan Rumah Tangga" — disetujui lewat sesi eksplorasi desain (lihat §7
-> Riwayat Perubahan). **Bukan** dokumentasi tampilan yang sudah ada di kode (beda dari
-> `architecture.md`/`code-conventions.md`/`database-design.md`) — ini arah baru yang mengganti
-> tampilan Tailwind-default existing (`amber-50`/`green-700`/`stone`/`rounded-xl shadow-sm`).
-> Redesain **per-modul menyusul saat masing-masing modul masuk fase implementasi** — lihat §6.
+> Arah visual dari file Figma **"Asisten Mama"**
+> (`figma.com/design/JP7zSthjOXwdQuaCdP1BIk/Asisten-Mama`, Page 1, 6 frame).
+> **Menggantikan total** arah "Buku Catatan Rumah Tangga" yang berlaku 2026-07-30 – 2026-08-18
+> (palet kraft, tinta teal, badge stempel miring, radius 4–6px, nav 3-slot, dark mode) — lihat §8.
+> Nilai token di bawah **dipanen dari panel Design Figma**, bukan diambil dari piksel screenshot.
 
 ## 1. Konsep
 
-Tiga (lalu makin banyak) modul asisten-mama diperlakukan seperti halaman-halaman dalam satu **buku
-catatan rumah tangga** fisik — bukan sekadar app dengan tema warna hangat generik. Elemen material
-budaya rumah tangga Indonesia yang dipakai sebagai sumber keputusan visual: kertas kraft/amplop,
-tinta pena, dan stempel tinta merah pada kuitansi/dokumen resmi.
+Satu ruang koordinasi keluarga: putih bersih di atas latar mint sangat pucat, kartu membulat
+besar dengan bayangan halus, satu warna aksi hijau, dan warna per-modul yang cuma muncul sebagai
+ubin ikon di Beranda. Tidak ada elemen dekoratif yang "berani" — keterbacaan dan kepadatan
+informasi yang dikejar, karena tiap layar menampilkan daftar (tugas, belanja, agenda, resep).
 
-Dua alasan kenapa arah ini dipilih (bukan sekadar "app yang ramah"): (1) fitur **Kantong**
-(`finance.md`) secara harfiah adalah amplop uang — motif amplop jadi masuk akal secara fungsional,
-bukan dekoratif; (2) menghindari 3 klise desain AI generik (cream+serif+terracotta;
-hitam+neon; broadsheet hairline) dengan cara aksen merah cuma dipakai sebagai "stempel" sesekali,
-bukan warna brand utama.
+Frame acuan lebar **402px**. Padding horizontal halaman **24**, gap antar-blok **16**.
 
 ## 2. Token warna
 
-| Token | Terang | Gelap | Peran |
-|---|---|---|---|
-| `--bg` | `#EAE3CE` | `#1B1712` | Latar utama — kertas kraft / sampul ledger malam |
-| `--surface` | `#F8F2E6` | `#262019` | Permukaan kartu "indeks" |
-| `--surface-alt` | `#F1E9D6` | `#2E271D` | Header, nav bar, variasi permukaan |
-| `--ink` | `#2B211A` | `#EDE4D0` | Teks utama |
-| `--ink-soft` | `#6B5F4E` | `#B3A68C` | Teks sekunder/muted |
-| `--accent` (tinta teal) | `#1F5D52` | `#4FA090` | Aksi utama, status "lagi di sini" (nav) |
-| `--stamp` (stempel merah) | `#A8432C` | `#D97452` | **Cuma untuk badge status** (LUNAS/OVER/BARU), bukan warna brand utama |
-| `--rule` | `#C9BC9C` | `#4A4030` | Garis ledger/border kartu |
+Nama variabel & kelas utility sengaja dipertahankan dari sistem lama; yang berubah cuma nilainya.
+Alasannya operasional: blade yang belum dimigrasikan (mis. Finance) dibangun di atas `bg-app`,
+`text-ink-soft`, `border-rule` — kalau kelasnya dihapus, utility-nya jadi **tidak terdefinisi**
+(hilang total, bukan berganti gaya) dan halaman itu rusak sampai gilirannya diredesain.
 
-Kedua tema (terang & gelap) didesain setara — dark mode bukan cuma invert, tetap warm/berkarakter
-("sampul ledger malam", bukan abu-abu generik). Implementasi: token di `:root`, override di
-`@media (prefers-color-scheme: dark)` dan `:root[data-theme="dark"]`/`[data-theme="light"]` untuk
-toggle manual pengguna.
-
-### 2.1 Warna per-modul (tab & avatar anggota)
-
-Selain token global di atas, tiap modul dapat warna kecil sendiri — dipakai konsisten untuk ubin
-grid Beranda **dan** avatar anggota keluarga (satu sistem warna, bukan dua palet terpisah):
-
-| Modul | Terang | Gelap |
+| Token | Nilai | Peran |
 |---|---|---|
-| Resep | `#A9812F` | `#CDA54C` |
-| Belanja | `#1F5D52` | `#4FA090` |
-| Keuangan | `#A8432C` | `#D97452` |
-| Langganan | `#6B5F4E` | `#B3A68C` |
-| Rumah Tangga | `#3F6B8A` | `#6EA0C2` |
-| Inventaris (segera) | `#8A8072` | `#A69A86` |
+| `--bg` | `#F4FAF6` | Latar halaman |
+| `--surface` | `#FFFFFF` | Kartu |
+| `--surface-alt` | `#FFFFFF` | Nav bar |
+| `--ink` | `#1F1D2B` | Teks utama |
+| `--ink-soft` | `#6C6880` | Teks sekunder |
+| `--muted-2` | `#A5A4BF` | Teks tersier — **hanya non-esensial** |
+| `--rule` | `#E8EAE6` | Divider & border |
+| `--accent` | `#00B14F` | Aksi utama, state aktif nav, FAB |
+| `--accent-tint` | `#E5F7EE` | Latar ikon/chip hijau solid |
+| `--danger` | `#FF5E5B` | Prioritas Tinggi, aksi destruktif |
+| `--warning` | `#FFC107` | Prioritas Sedang |
+| `--shadow-card` | `0 2px 8px rgb(0 0 0 / 6%)` | Elevasi kartu (ekstrapolasi) |
+
+Tiga token turunan untuk **teks & ikon**, karena warna Figma di atas terlalu terang sebagai teks:
+
+| Token | Nilai | Kontras di atas putih | Menggantikan |
+|---|---|---|---|
+| `--accent-text` | `#087A3B` | 5,44:1 | `--accent` (2,84:1) |
+| `--danger-text` | `#C62828` | 5,62:1 | `--danger` (3,00:1) |
+| `--warning-text` | `#8A5D00` | 5,76:1 | `--warning` (1,66:1) |
+
+Aturannya: **isian (fill) pakai warna Figma apa adanya, teks & ikon pakai turunan gelapnya.**
+Jadi `.bg-accent` tetap `#00B14F` (identitas brand tidak berubah), sedangkan `.text-accent`,
+`.text-danger`, dan teks di `.badge-*` memakai turunan. Latar badge tetap warna Figma pada 7,84%.
+
+**Light-only.** Tidak ada satupun frame gelap di Figma, dan dark mode dibuang 2026-08-18 — tidak
+ada `@media (prefers-color-scheme: dark)`, `[data-theme]`, maupun toggle di shell.
+
+⚠️ `--muted-2` di atas `#FFFFFF` kontrasnya ≈ **2,4:1**, di bawah ambang WCAG AA 4,5:1. Pakai
+hanya untuk hal yang boleh tidak terbaca — **tanggal luar-bulan di kalender dan placeholder input,
+titik**. Jangan untuk teks sekunder (pakai `--ink-soft`, 5,34:1) dan jangan untuk kontrol
+interaktif (tombol hapus item / keluarkan anggota sempat memakainya, sudah dipindah).
+
+⚠️ **Belum beres:** label putih di atas isian `--accent` `#00B14F` kontrasnya **2,84:1** — di bawah
+AA untuk teks 14px bold (ambang 3:1 hanya berlaku untuk teks ≥18,66px bold). Ini menyangkut warna
+brand di file Figma, jadi tidak diubah sepihak. Kalau mau dibereskan tanpa mengubah tampilan
+banyak: gelapkan isian tombol ke `#00873D` (putih di atasnya = 4,63:1).
+
+### 2.1 Warna ubin modul (Beranda)
+
+Pasangan ikon/latar bergaya Material 800/50. Muncul **hanya** di ubin grid Beranda.
+
+| Ubin | Ikon | Latar |
+|---|---|---|
+| Kalender | `#1976D2` | `#E3F2FD` |
+| Tugas | `#5E35B1` | `#EDE7F6` |
+| Belanja | `#2E7D32` | `#E8F5E9` |
+| Tagihan | `#E65100` | `#FFF3E0` |
+| Resep | `#00838F` | `#E0F7FA` (ekstrapolasi — §7) |
+
+### 2.2 Warna avatar anggota
+
+Palet **terpisah** dari §2.1 — beda dari sistem lama yang sengaja menyatukan keduanya.
+Dipakai lewat `User::avatarColorClass()` (`.avatar-1` … `.avatar-6`).
+
+`#00B14F` · `#E91E63` · `#5C68C0` · `#FFA000` · `#00897B`¹ · `#C2185B`¹
+<sup>¹ ekstrapolasi — Figma cuma memberi 4, dua terakhir ada supaya keluarga 5–6 orang tidak
+bertabrakan warna.</sup>
 
 ## 3. Tipografi
 
-| Peran | Font (final, self-hosted) | Font sistem (preview/fallback) |
-|---|---|---|
-| Display — judul, nominal besar | Zilla Slab (bold) | Georgia, Cambria, "Times New Roman", serif |
-| Body/UI — teks & label | Inter | "Segoe UI", -apple-system, Helvetica, Arial, sans-serif |
-| Data — nominal uang & tanggal | JetBrains Mono | "Cascadia Mono", Consolas, "Courier New", monospace |
+Font tunggal **Figtree**, self-host lewat `bunny()` di `vite.config.js` (bukan CDN runtime —
+konsisten sikap zero-budget `docs/DEPLOY.md`). Bobot: Regular 400, Bold 700, ExtraBold 800.
 
-Font data (mono) dipakai **konsisten** untuk semua nominal uang & tanggal — memberi kesan
-"buku kas", langsung menyambung ke fitur Kantong. `font-variant-numeric: tabular-nums` di semua
-tempat digit berbaris (nominal, tanggal) supaya sejajar rapi.
+| Peran | Spek |
+|---|---|
+| H1 halaman | ExtraBold 24 / `--ink` |
+| Sub-judul halaman | Regular 14 / `--ink-soft` |
+| Judul section | Bold 16 / `--ink` |
+| Judul kartu | Bold 14–16 / `--ink` |
+| Body & meta | Regular 12–14 / `--ink-soft` |
+| Label tombol | Bold 14 / putih |
 
-**Catatan implementasi:** font final (Zilla Slab/Inter/JetBrains Mono) harus **di-self-host**
-(taruh di `public/fonts` + `@font-face`, load lewat Vite) — bukan CDN Google Fonts, konsisten
-dengan sikap zero-budget & kontrol performa aplikasi ini (lihat `docs/DEPLOY.md`).
+## 4. Signature element: badge pill
 
-## 4. Signature element: badge stempel
+Pill kecil ber-radius penuh. Latar = warna semantik pada **opacity 7,84%**, teks = warna semantik
+penuh (terkonfirmasi di panel Figma: tiap warna badge muncul berpasangan 100% + 7,84%).
+Kelas: `.badge` + `.badge-accent` / `.badge-danger` / `.badge-warning` / `.badge-muted`.
 
-Lingkaran/oval kecil, tinta stempel-merah, sedikit miring (rotate ±6–9°), border 1.5px warna
-stempel, teks uppercase kecil letter-spaced. Dipakai konsisten lintas modul untuk status:
-- **LUNAS** — item shopping list yang dibayar/checked (`shopping-list.md`)
-- **OVER** — kantong yang melebihi budget (`finance.md` §6.6)
-- **BARU** — resep hasil import AI (`cooking.md`)
-- **PREMIUM** — badge tier langganan (`billing.md`)
+Dipakai untuk: prioritas tugas (Tinggi/Sedang/Rendah), jadwal tugas (Hari Ini/Besok/tanggal),
+durasi & porsi resep, skor kecocokan hasil pencarian bahan.
 
-Ini satu-satunya elemen "berani" di sistem — dipakai hemat & konsisten, bukan disebar ke semua
-tempat sebagai dekorasi (prinsip "spend boldness in one place").
+Badge stempel miring dari sistem lama **dihapus** — beserta token `--stamp`.
 
 ## 5. Pola layout
 
-### 5.1 Beranda = grid modul (bukan daftar isi vertikal — direvisi, lihat §7)
-Terinspirasi grid shortcut ala e-wallet Indonesia (GoPay/DANA/ShopeePay): ubin ikon bulat/rounded
-per modul, 3 kolom, dengan badge notifikasi kecil (angka/tanda seru) di pojok ubin untuk item yang
-perlu perhatian. **Modul baru = nambah satu ubin**, tidak mengubah struktur nav bar.
+### 5.1 Beranda = grid ubin modul
+Brand bar (ikon rumah hijau + wordmark "Keluarga" + ikon lonceng) → sapaan `Halo, {nama depan}!`
+→ baris avatar anggota + tombol `+` bergaris putus → grid ubin 3 kolom → section "Acara Terdekat"
+→ section "Tugas Hari Ini".
 
-Header Beranda: sapaan + tanggal + **avatar anggota keluarga berkode-warna** (terinspirasi Cozi,
-sampai beberapa anggota, warna reuse dari §2.1) + strip ringkasan "hari ini" (jumlah barang
-belanja, kantong over, resep baru — inspirasi "Today view" Cozi).
+Ubin = kartu putih radius 20 dengan ikon rounded-square ber-tint. Badge angka kecil di pojok ubin
+untuk hal yang perlu perhatian (belanja pending, resep baru). **Modul baru = nambah satu ubin.**
 
-### 5.2 Nav bar: 3 slot, tidak duplikasi dengan grid
-| Slot | Isi | Alasan |
-|---|---|---|
-| Kiri | Beranda | Anchor utama |
-| Tengah (timbul) | **Cari** (pencarian resep by bahan, fitur AI andalan) | Pola tombol pop-up ala tombol "Scan" e-wallet — dipakaikan ke aksi paling khas & bernilai di app ini |
-| Kanan | Keluarga/User | Kelola anggota rumah tangga & pengaturan (mis. tanggal reset kantong, `finance.md` §6.11) |
+Isi grid (revisi dari Figma, keputusan 2026-08-18): Kalender, Tugas, Belanja, Resep, Tagihan.
+Ubin **Obrolan** & **Galeri** yang ada di frame sengaja dibuang. Ubin **Tagihan** dirender
+non-aktif sampai hubungannya dengan modul Finance diputuskan.
 
-Modul fitur (Resep, Belanja, Keuangan, Langganan, dst) **cuma** ada di grid Beranda — nav bar tidak
-menduplikasinya. Status "lagi di halaman mana" untuk item nav flat pakai cincin tipis warna
-`--accent` di sekitar ikon (reuse bentuk lingkaran dari signature stempel, bukan metafora baru).
+### 5.2 Nav bar: 4 slot flat
+| Slot | Isi |
+|---|---|
+| 1 | Beranda |
+| 2 | Kalender |
+| 3 | Belanja |
+| 4 | Profil |
 
-### 5.3 Kartu "kantong" (amplop budget)
-Sudut atas terpotong (clip-path, siluet lipatan amplop), nominal pakai font mono besar, garis putus
-horizontal memisahkan info sisa budget, badge stempel "OVER" untuk kantong minus.
+Tombol "Cari" timbul di tengah dari sistem lama **dihapus**.
 
-### 5.4 Kartu "indeks" umum
-Card dasar (`--surface` di atas `--bg`), border 1px `--rule`, radius kecil (4–6px, bukan
-`rounded-xl` besar khas Tailwind default) — kesan kartu indeks fisik, bukan card app generik.
+**Aturan state aktif — satu aturan, ditetapkan sekali di `layout.blade.php`:** slot menyala hanya
+untuk route miliknya sendiri. Pengecualian tunggal `/tugas` → menyalakan **Kalender** (mengikuti
+frame `task-list`; Kalender & Tugas satu pasangan agenda keluarga). Route lain yang tidak punya
+slot — `/resep`, `/resep/bahan`, `/finance`, `/favorites`, `/resep/{id}` — tidak menyalakan apa pun.
 
-## 6. Status implementasi & rencana lanjutan
+### 5.3 Kartu & tombol
+| Elemen | Spek |
+|---|---|
+| Kartu besar (`.card`) | radius 24, padding 20, gap 16, putih, `--shadow-card` |
+| Kartu kecil (`.card-sm`) | radius 20, putih, `--shadow-card` |
+| Tombol primary | radius penuh (pill), tinggi 42, padding 18×12, gap 8, `--accent` |
+| FAB (`<x-fab>`) | lingkaran 56, `--accent`, mengambang kanan bawah di dalam kolom konten |
+| Segmented control | kartu pill putih, segmen aktif = pill `--accent` teks putih |
+| Grid resep | 2 kolom, gap 16 |
 
-**Disetujui (fondasi/sistem):** token warna, tipografi, signature stempel, pola Beranda-grid,
-struktur nav 3-slot, kartu kantong, kartu indeks.
+### 5.4 Buku Resep = dua route, bukan satu komponen bertab
+"Tab" Jelajah / Cari dari bahan adalah **dua route** dengan satu partial tautan
+(`<x-resep-tabs>`), bukan komponen Livewire pembungkus:
 
-**🔜 Menyusul saat implementasi — per modul, urutan mengikuti kapan modulnya digarap:**
-- **Cooking — prioritas berikutnya (2026-08-05):** implementasi fitur modul Cooking (`RecipeFinder`,
-  `RecipeList`, `recipes/show`, dll) sudah selesai, jadi ini modul pertama yang siap masuk fase
-  redesain sesuai §6 (aturan "redesain menyusul saat implementasi"). Motivasi konkret yang baru
-  muncul: blade Cooking masih pakai palet Tailwind lama (`bg-white`/`stone-*`/`green-700`) yang
-  **tidak ikut skema dark-mode** `docs/ui-design.md` §2 — sementara `<body>` (`layout.blade.php`)
-  sudah pakai token `--ink`/`--bg` yang otomatis berganti gelap/terang. Akibatnya teks di kotak
-  input/select Cooking nyaris tak terbaca di dark mode (ditemukan user 2026-08-05, tambal-sulam
-  darurat: nambah `text-stone-800` eksplisit — **bukan** perbaikan permanen, cuma supaya kebaca
-  sampai redesain penuh ke token `--surface`/`--ink`/`--rule` dst dikerjakan). Redesain penuh perlu
-  mencakup: form `RecipeFinder` (input bahan, filter kategori/cuisine, tombol AI), kartu hasil
-  pencarian, `RecipeList`/`FavoritesList`, halaman detail `recipes/show` (termasuk badge stempel
-  "BARU" utk resep AI sesuai §4, badge durasi/gizi/gramasi yang baru ditambahkan), dan
-  `recipe-rating`.
-- Redesain `ShoppingListPage` ke sistem ini (termasuk kartu item, badge assign, dll dari
-  `shopping-list.md`).
-- Redesain `FinancePage` + halaman baru "Kelola Kantong" (dari `finance.md` §15) ke sistem ini —
-  ini yang paling banyak elemen barunya (kartu kantong, top-up, filter periode).
-- Halaman Beranda (grid) & Keluarga/User itu sendiri — belum ada route/Livewire component-nya sama
-  sekali, perlu dibangun dari nol mengikuti mockup ini.
-- Migrasi warna/tipografi di `resources/views/components/layout.blade.php` (shell PWA) dari
-  palet lama (`amber-50`/`green-700`/`stone`) ke token baru.
-- Font self-hosting (Zilla Slab/Inter/JetBrains Mono) — belum di-setup di build Vite.
+| Route | Komponen |
+|---|---|
+| `/resep` | `RecipeList` — jelajah: pencarian nama, chip kategori, grid 2 kolom |
+| `/resep/bahan` | `RecipeFinder` — pencarian by-bahan + tombol AI |
 
-**Preview referensi:** mockup interaktif (HTML, palet terang/gelap, grid + nav + kartu kantong)
-dibuat selama sesi desain — kalau butuh dilihat lagi, minta dibuatkan ulang dari deskripsi di
-dokumen ini (file mockup asli ada di scratchpad sesi, sifatnya sementara).
+Alasannya bukan estetika: `RecipeList` & `RecipeFinder` tetap berdiri sendiri sehingga tetap bisa
+dites langsung lewat `Livewire::test()`. Melipat keduanya ke komponen induk akan memecahkan
+`tests/Feature/Cooking/RecipeFinderTest.php`.
 
-## 7. Riwayat Perubahan
+`/cari` → redirect ke `/resep/bahan`, `/recipes` → redirect ke `/resep` (bookmark & entri PWA
+cache yang sudah beredar tidak boleh mati; dijaga `tests/Feature/ExampleTest.php`).
+
+## 6. Status implementasi
+
+**Selesai (2026-08-18):** token & font, shell (nav 4-slot, dark mode dibuang), Beranda,
+Kalender, Tugas, Belanja, Buku Resep + Cari-dari-bahan, detail resep, Favorit, rating,
+Profil Keluarga. Kalender & Tugas sudah jadi modul penuh (`app/Modules/{Calendar,Tasks}`,
+tabel `events` & `tasks`, household-scoped) — **tidak ada lagi data statis di aplikasi.**
+
+**Belum:**
+- `FinancePage` — sengaja tidak diredesain (keputusan Tagihan-vs-Finance masih terbuka). Ikut
+  palet baru karena nama kelas dipertahankan, tapi masih pakai pola kartu Tailwind lama.
+- Peserta acara masih satu penanggung jawab (`events.user_id`), belum tumpukan avatar seperti
+  di frame — butuh pivot `event_user`.
+
+## 7. Yang didesain vs yang diekstrapolasi
+
+**Dari Figma:** seluruh token warna §2, Figtree + bobot/ukuran §3, radius 20/24/pill, padding 24/20,
+gap 16, pola badge 7,84%, 4 warna avatar, 4 warna ubin, isi & copy Indonesia di 6 frame.
+
+**Ekstrapolasi (tidak ada di Figma):** warna ubin Resep, warna avatar ke-5 & ke-6, nilai
+`--shadow-card`, tiga token teks `--accent-text`/`--danger-text`/`--warning-text` (diturunkan demi
+kontras, bukan diambil dari file), tinggi/padding nav & ukuran ikon, tampilan detail resep /
+Favorit / rating / semua form, penempatan logout & invite-code di Profil, penempatan badge angka
+di ubin, aturan state aktif nav, pemecahan `/resep` + `/resep/bahan`.
+
+**Fungsi yang dipindah, bukan dihapus:** checkbox inline "Hanya favorit" di halaman daftar resep
+sudah tidak ada (tidak ada di frame) — favorit sekarang dicapai lewat ikon hati di brand bar
+menuju `/favorites`. Konsekuensinya `RecipeList::$onlyFavorites` & `updatedOnlyFavorites()` kini
+hanya terpakai lewat subclass `FavoritesList`.
+
+**Ada di Figma tapi tidak dipakai:** ubin Obrolan & Galeri; banner "Terhubung dengan Cooking Mama"
+(Cooking modul internal, bukan integrasi eksternal); mock status bar `09:41`; header grup
+Dapur/Kamar Mandi di Belanja (`shopping_list_items` belum punya kolom kategori); baris toggle
+"Pengaturan Notifikasi" di Profil (belum ada penyimpanannya — toggle yang tidak menyimpan apa pun
+lebih menyesatkan daripada absen); "Estimasi Total Budget Rp 150.000" di Belanja (item belum punya
+kolom harga — metriknya diganti jadi jumlah item belum dibeli, angka yang benar-benar ada).
+
+**Form tambah/edit sepenuhnya ekstrapolasi:** Figma tidak punya satu pun frame form — frame
+Kalender bahkan tidak punya tombol tambah. Form tambah Acara & Tugas dirakit dari komponen sistem
+yang sudah ada (kartu, pill, chip, `<input type="date">` bawaan browser), dipicu dari FAB.
+
+## 8. Riwayat Perubahan
 
 | Tanggal | Perubahan |
 |---|---|
-| 2026-07-30 | Draf arah desain "Buku Catatan Rumah Tangga" disetujui setelah 3 iterasi mockup: (v1) konsep dasar kraft/tinta-teal/stempel; (v2) Beranda diubah dari daftar-isi vertikal jadi grid ala ShopeePay + tombol Cari timbul di tengah nav + avatar anggota ala Cozi; (v3) nav bar disederhanakan jadi 3 slot non-duplikatif (Beranda/Cari/Keluarga), modul "Rumah Tangga" dipindah dari grid ke nav sebagai "Keluarga". Redesain per-modul (Cooking/ShoppingList/Finance/Beranda/Keluarga) sengaja **ditunda ke fase implementasi masing-masing**, dicatat sebagai reminder (§6). |
-| 2026-08-05 | User menemukan bug kontras teks di form Cooking pada dark mode, lalu mengaitkannya dengan pertanyaan apakah sistem terang/gelap sudah ada. **Klarifikasi:** sistem terang/gelap **sudah** dirancang & disetujui sejak 2026-07-30 (§2) — bug-nya bukan karena konsepnya belum ada, tapi karena blade Cooking belum dimigrasikan ke token itu (masih Tailwind default `bg-white`/`stone`). §6 diperkuat: Cooking ditandai sebagai modul **prioritas berikutnya** untuk redesain, karena implementasi fiturnya sudah selesai (syarat "menyusul saat implementasi" di §6 sudah terpenuhi). Perbaikan `text-stone-800` yang ditambahkan saat itu ditandai eksplisit sebagai tambal-sulam sementara, bukan solusi akhir. |
+| 2026-07-30 | Draf arah "Buku Catatan Rumah Tangga" disetujui setelah 3 iterasi mockup: kraft/tinta-teal/stempel; Beranda jadi grid ala ShopeePay + tombol Cari timbul; nav 3 slot (Beranda/Cari/Keluarga). Redesain per-modul ditunda ke fase implementasi masing-masing. |
+| 2026-08-05 | Bug kontras teks di form Cooking pada dark mode. Klarifikasi: sistem terang/gelap sudah dirancang sejak 2026-07-30; bug-nya karena blade Cooking belum dimigrasikan ke token. Cooking ditandai prioritas redesain berikutnya. |
+| 2026-08-18 | **Arah "Buku Catatan Rumah Tangga" diganti total** oleh file Figma "Asisten Mama". Lima keputusan user: (1) Kalender & Tugas dibangun UI dulu, data menyusul; (2) hubungan ubin Tagihan ↔ modul Finance **belum diputuskan** — ubin dirender non-aktif, Finance tidak disentuh; (3) grid Beranda direvisi dari frame — Obrolan & Galeri dibuang, Resep ditambahkan; (4) pencarian by-bahan tetap hidup sebagai mode kedua Buku Resep, bukan slot nav; (5) **dark mode dibuang** — tidak ada frame gelap di Figma. Konsekuensi: §2 palet, §2.1 penyatuan warna modul-avatar, §3 tipografi tiga-font (Zilla Slab/Inter/JetBrains Mono), §4 badge stempel, §5.2 nav 3-slot, §5.3 kartu kantong amplop, dan §5.4 radius 4–6px dari versi lama **semuanya tidak berlaku lagi**. |

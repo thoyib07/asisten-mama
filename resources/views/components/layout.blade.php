@@ -5,49 +5,59 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Asisten Mama</title>
     <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#F1E9D6">
-    <script>
-    (function () {
-        var saved = localStorage.getItem('theme');
-        if (saved === 'dark' || saved === 'light') document.documentElement.setAttribute('data-theme', saved);
-        document.addEventListener('click', function (e) {
-            var btn = e.target.closest('[data-theme-toggle]');
-            if (!btn) return;
-            var current = document.documentElement.getAttribute('data-theme')
-                || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-            var next = current === 'dark' ? 'light' : 'dark';
-            document.documentElement.setAttribute('data-theme', next);
-            localStorage.setItem('theme', next);
-        });
-    })();
-    </script>
+    <meta name="theme-color" content="#00B14F">
+    {{-- @fonts memuat @font-face Figtree yang di-self-host oleh bunny() di vite.config.js.
+         Tanpa direktif ini font-nya ikut ter-build tapi tidak pernah dipakai — app diam-diam
+         jatuh ke font sistem (kondisi Instrument Sans sebelumnya). --}}
+    @fonts
     @vite(['resources/css/app.css'])
     @livewireStyles
 </head>
 <body class="min-h-screen bg-app font-sans text-ink">
 
-    <header class="bg-surface-alt text-ink px-4 py-3 flex items-center gap-2 sticky top-0 z-10 shadow-sm">
-        <span class="text-2xl">🏡</span>
-        <span class="font-bold text-lg tracking-tight">Asisten Mama</span>
-    </header>
-
-    <main class="pb-24 px-4 pt-4 max-w-lg mx-auto">
+    {{-- Tidak ada header global: tiap halaman merender brand bar / judulnya sendiri sesuai frame. --}}
+    <main class="mx-auto max-w-[430px] px-6 pt-4 pb-28">
         {{ $slot }}
     </main>
 
-    <nav class="fixed bottom-0 left-0 right-0 bg-surface-alt border-t border-rule flex justify-around items-end py-2 z-10">
-        <a wire:navigate href="{{ route('beranda') }}" class="flex flex-col items-center gap-0.5 text-xs {{ request()->routeIs('beranda') ? 'text-accent font-semibold' : 'text-ink-soft' }}">
-            <span class="text-xl">🏠</span>
-            <span>Beranda</span>
-        </a>
-        <a wire:navigate href="{{ route('cooking.cari') }}" class="flex flex-col items-center gap-0.5 text-xs -translate-y-4">
-            <span class="bg-accent flex h-12 w-12 items-center justify-center rounded-full text-xl text-white shadow-md {{ request()->routeIs('cooking.cari') ? 'ring-2 ring-offset-2 ring-accent' : '' }}">🔍</span>
-            <span class="text-ink-soft">Cari</span>
-        </a>
-        <a wire:navigate href="{{ route('household.index') }}" class="flex flex-col items-center gap-0.5 text-xs {{ request()->routeIs('household.index') ? 'text-accent font-semibold' : 'text-ink-soft' }}">
-            <span class="text-xl">👨‍👩‍👧</span>
-            <span>Keluarga</span>
-        </a>
+    @php
+        // Aturan state aktif nav (docs/ui-design.md §5.2): slot menyala hanya untuk route miliknya
+        // sendiri. Pengecualian tunggal: /tugas menyalakan Kalender (satu pasangan agenda keluarga).
+        // Route tanpa slot (/resep, /finance, /favorites, ...) tidak menyalakan apa pun.
+        $navSlots = [
+            ['route' => 'beranda', 'label' => 'Beranda', 'on' => ['beranda'],
+             'icon' => 'M3 10.5 12 3l9 7.5M5.25 9.75V21h13.5V9.75'],
+            ['route' => 'kalender', 'label' => 'Kalender', 'on' => ['kalender', 'tugas'],
+             'icon' => 'M4 6.75A1.75 1.75 0 0 1 5.75 5h12.5A1.75 1.75 0 0 1 20 6.75v12.5A1.75 1.75 0 0 1 18.25 21H5.75A1.75 1.75 0 0 1 4 19.25zM4 10h16M8 3v4M16 3v4'],
+            ['route' => 'shopping-list.index', 'label' => 'Belanja', 'on' => ['shopping-list.index'],
+             'icon' => 'M3 4h2l2.4 11.2a1.5 1.5 0 0 0 1.5 1.2h8.2a1.5 1.5 0 0 0 1.5-1.2L21 8H6M9 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2M18 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2'],
+            ['route' => 'household.index', 'label' => 'Profil', 'on' => ['household.index'],
+             'icon' => 'M16 20v-1.5a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4V20M9.5 10.5a3.25 3.25 0 1 0 0-6.5 3.25 3.25 0 0 0 0 6.5M17 14.3a4 4 0 0 1 3 3.87V20M16 4.3a3.25 3.25 0 0 1 0 6.2'],
+        ];
+    @endphp
+
+    <nav class="fixed bottom-0 left-1/2 z-10 w-full max-w-[430px] -translate-x-1/2 border-t border-rule bg-surface-alt">
+        <div class="flex items-stretch justify-around px-2 pb-2 pt-2.5">
+            @foreach ($navSlots as $slot)
+                @php $active = request()->routeIs(...$slot['on']); @endphp
+                <a
+                    wire:navigate
+                    href="{{ route($slot['route']) }}"
+                    @class([
+                        'flex flex-1 flex-col items-center gap-1 rounded-2xl py-1 text-[11px]',
+                        'text-accent font-bold' => $active,
+                        'text-ink-soft' => ! $active,
+                    ])
+                    @if ($active) aria-current="page" @endif
+                >
+                    <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                         stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="{{ $slot['icon'] }}" />
+                    </svg>
+                    <span>{{ $slot['label'] }}</span>
+                </a>
+            @endforeach
+        </div>
     </nav>
 
     @livewireScripts

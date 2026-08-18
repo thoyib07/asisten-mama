@@ -2,8 +2,10 @@
 
 namespace App\Livewire;
 
+use App\Modules\Calendar\Models\Event;
 use App\Modules\Cooking\Models\Recipe;
 use App\Modules\ShoppingList\Models\ShoppingListItem;
+use App\Modules\Tasks\Models\Task;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -14,27 +16,25 @@ class Beranda extends Component
     {
         $household = auth()->user()->currentHousehold()->with('users')->first();
 
+        $doneTasks = Task::where('is_done', true)->count();
+        $pendingTasks = Task::pending()->count();
+        $totalTasks = $doneTasks + $pendingTasks;
+
         return view('livewire.beranda', [
-            'greeting' => $this->greeting(),
-            'today' => now()->locale('id')->translatedFormat('l, d F Y'),
+            'greeting' => 'Halo, '.strtok(auth()->user()->name, ' ').'!',
             'members' => $household->users,
             'newRecipeCount' => Recipe::where('created_at', '>=', now()->subDays(7))->count(),
             // ponytail: goes through the parent ShoppingList (household-scoped) rather than
             // querying ShoppingListItem directly — the item itself isn't BelongsToHousehold.
             'pendingShoppingCount' => ShoppingListItem::whereHas('shoppingList')
                 ->where('is_checked', false)->count(),
+            'todayEventCount' => Event::whereDate('starts_at', today())->count(),
+            'pendingTaskCount' => $pendingTasks,
+            'taskProgress' => $totalTasks > 0 ? (int) round($doneTasks / $totalTasks * 100) : 0,
+            // Tugas menunggu yang paling mendesak — jadi baris keterangan di kartu "Tugas Hari Ini".
+            'nextTask' => Task::with('user')->pending()
+                ->orderByRaw('due_on is null, due_on')->first(),
+            'nextEvent' => Event::with('user')->upcoming()->first(),
         ]);
-    }
-
-    private function greeting(): string
-    {
-        $hour = (int) now()->format('G');
-
-        return match (true) {
-            $hour < 10 => 'Selamat pagi',
-            $hour < 15 => 'Selamat siang',
-            $hour < 18 => 'Selamat sore',
-            default => 'Selamat malam',
-        };
     }
 }

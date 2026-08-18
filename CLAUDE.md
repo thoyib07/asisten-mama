@@ -5,8 +5,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## What this is
 
 A household-assistant SaaS for families ("asisten mama"): each family (household) gets its own
-scoped data across modules. MVP modules: Cooking (recipe finder, ported from the standalone
-cooking-mama-git prototype), Shopping List, and Financial tracking. Laravel 13 + Livewire 4
+scoped data across modules. Modules: Cooking (recipe finder, ported from the standalone
+cooking-mama-git prototype), Shopping List, Financial tracking, Calendar, Tasks, Household. Laravel 13 + Livewire 4
 (customer-facing UI) + Filament 5 (admin/CRUD). PHP 8.3, PostgreSQL, Pest 4.
 
 ## Commands
@@ -37,7 +37,7 @@ including via relation traversal (see `HouseholdIsolationTest`).
 
 Scoping per table:
 - `households`, `household_user` — not scoped (they define the boundary).
-- `shopping_lists`, `categories`, `transactions` — household-scoped via the trait.
+- `shopping_lists`, `categories`, `transactions`, `events`, `tasks` — household-scoped via the trait.
 - `recipes`, `ingredients`, `recipe_ingredient` — shared/global catalog, NOT household-scoped.
   AI-imported recipes become visible to every household. Accepted MVP tradeoff.
 - `favorites`, `ratings` — scoped per `user_id` (personal preference, not household-shared).
@@ -51,7 +51,7 @@ categories, all in one transaction. Called from the custom Filament registration
 ### Module layout (custom, no package)
 
 ```
-app/Modules/{Cooking,ShoppingList,Finance}/
+app/Modules/{Cooking,ShoppingList,Finance,Calendar,Tasks,Household}/
   Models/ Services/ Livewire/ Filament/ Providers/ routes/web.php
 ```
 

@@ -40,7 +40,7 @@ class User extends Authenticatable implements FilamentUser
 
     public function avatarColorClass(): string
     {
-        $classes = ['mod-resep', 'mod-belanja', 'mod-keuangan', 'mod-langganan', 'mod-rumahtangga', 'mod-inventaris'];
+        $classes = ['avatar-1', 'avatar-2', 'avatar-3', 'avatar-4', 'avatar-5', 'avatar-6'];
 
         return $classes[$this->id % count($classes)];
     }

@@ -1,40 +1,81 @@
-<div class="space-y-4">
+<div>
+    @unless ($lockFavoritesFilter)
+        <x-brand-bar>
+            <a wire:navigate href="{{ route('favorites.index') }}" class="text-ink-soft" aria-label="Resep favorit">
+                <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+                     stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M12 20s-7-4.35-7-9a4 4 0 0 1 7-2.65A4 4 0 0 1 19 11c0 4.65-7 9-7 9" />
+                </svg>
+            </a>
+        </x-brand-bar>
+
+        <header class="mt-5">
+            <h1 class="text-2xl font-extrabold">Buku Resep</h1>
+            <p class="text-sm text-ink-soft">Temukan dan masak hidangan favorit keluarga.</p>
+        </header>
+
+        <div class="mt-4">
+            <x-resep-tabs />
+        </div>
+    @else
+        <h1 class="text-2xl font-extrabold">Resep Favorit</h1>
+        <p class="text-sm text-ink-soft">Resep yang Anda tandai.</p>
+    @endunless
+
     <input
         type="text"
         wire:model.live.debounce.400ms="search"
-        placeholder="Cari nama resep..."
+        placeholder="Cari resep keluarga..."
         aria-label="Cari resep"
-        class="w-full rounded-xl border border-stone-200 bg-white px-4 py-3 text-sm text-stone-800 focus:outline-none focus:ring-2 focus:ring-green-600 placeholder-stone-400"
+        class="mt-4 w-full rounded-full border border-rule bg-surface px-5 py-3 text-sm text-ink placeholder:text-muted-2 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
     >
 
-    @unless ($lockFavoritesFilter)
-        @auth
-            <label class="flex items-center gap-2 text-sm text-stone-600">
-                <input type="checkbox" wire:model.live="onlyFavorites" class="rounded border-stone-300 text-green-700 focus:ring-green-600">
-                Hanya favorit
-            </label>
-        @endauth
-    @endunless
+    <div class="-mx-6 mt-4 flex flex-wrap gap-2 px-6">
+        <button
+            type="button"
+            wire:click="$set('category', '')"
+            @class(['rounded-full px-4 py-2 text-xs font-bold', 'bg-accent text-white' => $category === '', 'bg-surface text-ink-soft' => $category !== ''])
+        >Semua</button>
+        @foreach ($categories as $key => $label)
+            <button
+                type="button"
+                wire:click="$set('category', '{{ $key }}')"
+                @class(['rounded-full px-4 py-2 text-xs font-bold', 'bg-accent text-white' => $category === $key, 'bg-surface text-ink-soft' => $category !== $key])
+            >{{ $label }}</button>
+        @endforeach
+    </div>
 
-    <section class="space-y-3">
+    <div class="mt-4 grid grid-cols-2 gap-4">
         @forelse ($recipes as $recipe)
-            <div class="flex items-center gap-2 rounded-xl bg-white p-4 shadow-sm active:shadow-none">
-                <a wire:navigate href="{{ route('recipes.show', $recipe->id) }}" class="min-w-0 flex-1">
-                    <span class="font-semibold text-stone-800">{{ $recipe->name }}</span>
-                    @if ($recipe->servings)
-                        <span class="ml-2 text-xs text-stone-400">🍽️ {{ $recipe->servings }} porsi</span>
+            <div class="card-sm relative overflow-hidden">
+                <a wire:navigate href="{{ route('recipes.show', $recipe->id) }}" class="block">
+                    @if ($recipe->image_url)
+                        <img src="{{ $recipe->image_url }}" alt="" class="aspect-[4/3] w-full object-cover" loading="lazy">
+                    @else
+                        <span class="bg-tint flex aspect-[4/3] w-full items-center justify-center text-3xl" aria-hidden="true">🍽️</span>
                     @endif
+                    <span class="block p-3">
+                        <span class="block text-sm font-bold">{{ $recipe->name }}</span>
+                        <span class="mt-2 flex items-center gap-2 text-xs">
+                            @if ($recipe->duration_minutes)
+                                <span class="badge badge-accent">🕐 {{ $recipe->duration_minutes }}m</span>
+                            @endif
+                            @if ($recipe->servings)
+                                <span class="badge badge-muted">🍽️ {{ $recipe->servings }}</span>
+                            @endif
+                        </span>
+                    </span>
                 </a>
                 @auth
-                    @livewire('cooking::favorite-button', ['recipeId' => $recipe->id], key('fav-list-'.$recipe->id))
+                    <span class="absolute right-2 top-2">
+                        @livewire('cooking::favorite-button', ['recipeId' => $recipe->id], key('fav-list-'.$recipe->id))
+                    </span>
                 @endauth
             </div>
         @empty
-            <p class="rounded-xl bg-white p-4 text-center text-sm text-stone-400 shadow-sm">
-                Tidak ada resep yang cocok.
-            </p>
+            <p class="card col-span-2 p-6 text-center text-sm text-ink-soft">Tidak ada resep yang cocok.</p>
         @endforelse
-    </section>
+    </div>
 
     @if ($hasMore)
         <button
@@ -42,10 +83,14 @@
             wire:click="loadMore"
             wire:loading.attr="disabled"
             wire:target="loadMore"
-            class="w-full rounded-xl border border-stone-200 bg-white py-3 text-sm font-semibold text-stone-600 active:bg-stone-50 disabled:opacity-40"
+            class="mt-4 w-full rounded-full border border-rule bg-surface py-3 text-sm font-bold text-ink-soft disabled:opacity-40"
         >
             <span wire:loading.remove wire:target="loadMore">Muat lebih banyak</span>
             <span wire:loading wire:target="loadMore">Memuat...</span>
         </button>
     @endif
+
+    @unless ($lockFavoritesFilter)
+        <x-fab label="Cari resep dari bahan" onclick="window.location='{{ route('cooking.cari') }}'" />
+    @endunless
 </div>

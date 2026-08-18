@@ -1,8 +1,10 @@
 <?php
 
+use App\Modules\Calendar\Models\Event;
 use App\Modules\Finance\Models\Category;
 use App\Modules\Finance\Models\Transaction;
 use App\Modules\ShoppingList\Models\ShoppingList;
+use App\Modules\Tasks\Models\Task;
 
 it('creates a household with default categories when a user registers', function () {
     $user = makeHouseholdUser('Andi');
@@ -60,4 +62,23 @@ it('never leaks transactions or categories across households', function () {
 
     auth()->login($userA);
     expect(Transaction::count())->toBe(1);
+});
+
+it('never leaks events or tasks across households', function () {
+    $userA = makeHouseholdUser('Fajar');
+    $userB = makeHouseholdUser('Gita');
+
+    auth()->login($userA);
+    $eventA = Event::create(['title' => 'Rapat RT', 'starts_at' => now()->addDay()]);
+    $taskA = Task::create(['title' => 'Sapu halaman', 'priority' => 'tinggi']);
+
+    auth()->login($userB);
+    expect(Event::count())->toBe(0);
+    expect(Task::count())->toBe(0);
+    expect(Event::whereKey($eventA->id)->exists())->toBeFalse();
+    expect(Task::whereKey($taskA->id)->exists())->toBeFalse();
+
+    auth()->login($userA);
+    expect(Event::count())->toBe(1);
+    expect(Task::count())->toBe(1);
 });

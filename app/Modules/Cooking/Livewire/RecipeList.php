@@ -3,6 +3,7 @@
 namespace App\Modules\Cooking\Livewire;
 
 use App\Modules\Cooking\Models\Recipe;
+use App\Modules\Cooking\Support\RecipeTaxonomy;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -14,6 +15,9 @@ class RecipeList extends Component
     public string $search = '';
 
     public bool $onlyFavorites = false;
+
+    /** Kunci RecipeTaxonomy::MEAL_CATEGORIES, atau '' untuk "Semua". */
+    public string $category = '';
 
     public int $perPage = self::PER_PAGE_STEP;
 
@@ -29,6 +33,11 @@ class RecipeList extends Component
         $this->perPage = self::PER_PAGE_STEP;
     }
 
+    public function updatedCategory(): void
+    {
+        $this->perPage = self::PER_PAGE_STEP;
+    }
+
     public function loadMore(): void
     {
         $this->perPage += self::PER_PAGE_STEP;
@@ -38,6 +47,7 @@ class RecipeList extends Component
     {
         $query = Recipe::query()
             ->when($this->search !== '', fn ($q) => $q->where('name', 'ilike', '%'.$this->search.'%'))
+            ->when($this->category !== '', fn ($q) => $q->whereJsonContains('meal_categories', $this->category))
             ->when($this->onlyFavorites, fn ($q) => $q->favoritedBy(auth()->id()))
             ->orderByDesc('created_at')
             ->orderByDesc('id');
@@ -49,6 +59,7 @@ class RecipeList extends Component
             'recipes' => $recipes,
             'hasMore' => $total > $this->perPage,
             'lockFavoritesFilter' => $this->lockFavoritesFilter,
+            'categories' => RecipeTaxonomy::MEAL_CATEGORIES,
         ]);
     }
 }

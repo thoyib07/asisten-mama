@@ -4,84 +4,87 @@
 @source '../../storage/framework/views/*.php';
 
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+    --font-sans: 'Figtree', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
 }
 
-/* Buku Catatan Rumah Tangga design tokens — docs/ui-design.md §2.
-   Plain :root (not Tailwind's @theme) so [data-theme] can override at runtime;
-   @theme values get inlined into generated utility CSS at build time instead. */
+/* Design tokens — docs/ui-design.md §2. Nilai dipanen dari panel Design Figma
+   (figma.com/design/JP7zSthjOXwdQuaCdP1BIk/Asisten-Mama), bukan ditebak dari screenshot.
+
+   Nama variabel & kelas utility sengaja dipertahankan dari sistem lama supaya blade yang
+   belum dimigrasikan (mis. Finance) ikut palet baru tanpa jadi tak-terdefinisi. Yang
+   berubah cuma nilainya.
+
+   Light-only: dark mode dibuang 2026-08-18 (tidak ada frame gelap di Figma). */
 :root {
-    --bg: #EAE3CE;
-    --surface: #F8F2E6;
-    --surface-alt: #F1E9D6;
-    --ink: #2B211A;
-    --ink-soft: #6B5F4E;
-    --accent: #1F5D52;
-    --stamp: #A8432C;
-    --rule: #C9BC9C;
-}
-
-@media (prefers-color-scheme: dark) {
-    :root {
-        --bg: #1B1712;
-        --surface: #262019;
-        --surface-alt: #2E271D;
-        --ink: #EDE4D0;
-        --ink-soft: #B3A68C;
-        --accent: #4FA090;
-        --stamp: #D97452;
-        --rule: #4A4030;
-    }
-}
-
-:root[data-theme="dark"] {
-    --bg: #1B1712;
-    --surface: #262019;
-    --surface-alt: #2E271D;
-    --ink: #EDE4D0;
-    --ink-soft: #B3A68C;
-    --accent: #4FA090;
-    --stamp: #D97452;
-    --rule: #4A4030;
-}
-
-:root[data-theme="light"] {
-    --bg: #EAE3CE;
-    --surface: #F8F2E6;
-    --surface-alt: #F1E9D6;
-    --ink: #2B211A;
-    --ink-soft: #6B5F4E;
-    --accent: #1F5D52;
-    --stamp: #A8432C;
-    --rule: #C9BC9C;
+    --bg: #F4FAF6;
+    --surface: #FFFFFF;
+    --surface-alt: #FFFFFF;
+    --ink: #1F1D2B;
+    --ink-soft: #6C6880;
+    --muted-2: #A5A4BF;
+    --accent: #00B14F;
+    --accent-tint: #E5F7EE;
+    --danger: #FF5E5B;
+    --warning: #FFC107;
+    /* Turunan gelap untuk TEKS & IKON. Warna Figma di atas dipakai apa adanya sebagai isian
+       (fill), tapi sebagai teks kontrasnya cuma ~2.8–3.0:1 di atas putih — di bawah WCAG AA.
+       Isian tetap warna brand, teks/ikon pakai turunan ini. docs/ui-design.md §2. */
+    --accent-text: #087A3B;  /* 5.44:1 di atas putih */
+    --danger-text: #C62828;  /* 5.62:1 */
+    --warning-text: #8A5D00; /* 5.76:1 */
+    --rule: #E8EAE6;
+    --shadow-card: 0 2px 8px rgb(0 0 0 / 6%);
 }
 
 .bg-app { background-color: var(--bg); }
 .bg-surface { background-color: var(--surface); }
 .bg-surface-alt { background-color: var(--surface-alt); }
+.bg-tint { background-color: var(--accent-tint); }
 .text-ink { color: var(--ink); }
 .text-ink-soft { color: var(--ink-soft); }
-.text-accent { color: var(--accent); }
+/* ponytail: --muted-2 di atas putih cuma ~2.6:1 — di bawah WCAG AA. Hanya untuk teks
+   non-esensial (tanggal luar-bulan di kalender), jangan untuk teks yang harus terbaca. */
+.text-muted-2 { color: var(--muted-2); }
+.text-accent { color: var(--accent-text); }
 .bg-accent { background-color: var(--accent); }
 .border-rule { border-color: var(--rule); }
-.text-stamp { color: var(--stamp); }
-.border-stamp { border-color: var(--stamp); }
+.bg-rule { background-color: var(--rule); }
+.text-danger { color: var(--danger-text); }
+.border-danger { border-color: var(--danger); }
 
-/* Per-module colors — docs/ui-design.md §2.1. Reused identically by the Beranda
-   grid tiles and member avatars (one color system, not two palettes). */
-.mod-resep { background-color: #A9812F; }
-.mod-belanja { background-color: #1F5D52; }
-.mod-keuangan { background-color: #A8432C; }
-.mod-langganan { background-color: #6B5F4E; }
-.mod-rumahtangga { background-color: #3F6B8A; }
-.mod-inventaris { background-color: #8A8072; }
-
-@media (prefers-color-scheme: dark) {
-    .mod-resep { background-color: #CDA54C; }
-    .mod-belanja { background-color: #4FA090; }
-    .mod-keuangan { background-color: #D97452; }
-    .mod-langganan { background-color: #B3A68C; }
-    .mod-rumahtangga { background-color: #6EA0C2; }
-    .mod-inventaris { background-color: #A69A86; }
+/* Kartu — docs/ui-design.md §5. Radius 24 untuk kartu besar, 20 untuk kartu kecil/ubin. */
+.card {
+    background-color: var(--surface);
+    border-radius: 24px;
+    box-shadow: var(--shadow-card);
 }
+.card-sm {
+    background-color: var(--surface);
+    border-radius: 20px;
+    box-shadow: var(--shadow-card);
+}
+
+/* Badge pill — docs/ui-design.md §4. Latar = warna semantik pada 7.84%, teks = warna penuh. */
+.badge { border-radius: 999px; padding: 2px 8px; font-size: 11px; font-weight: 700; }
+.badge-accent { color: var(--accent-text); background-color: rgb(0 177 79 / 7.84%); }
+.badge-danger { color: var(--danger-text); background-color: rgb(255 94 91 / 7.84%); }
+.badge-warning { color: var(--warning-text); background-color: rgb(255 193 7 / 7.84%); }
+.badge-muted { color: var(--ink-soft); background-color: rgb(108 104 128 / 7.84%); }
+
+/* Warna ubin grid Beranda — docs/ui-design.md §2.1. Pasangan ikon/latar ala Material 800/50. */
+.tile-kalender { color: #1976D2; background-color: #E3F2FD; }
+.tile-tugas    { color: #5E35B1; background-color: #EDE7F6; }
+.tile-belanja  { color: #2E7D32; background-color: #E8F5E9; }
+.tile-tagihan  { color: #E65100; background-color: #FFF3E0; }
+.tile-resep    { color: #00838F; background-color: #E0F7FA; }
+
+/* Warna avatar anggota — docs/ui-design.md §2.2. Palet TERPISAH dari warna ubin (beda dari
+   sistem lama yang menyatukan keduanya). 1–4 dari Figma, 5–6 ekstrapolasi supaya keluarga
+   beranggota 5–6 orang tidak bertabrakan warna. Dipakai lewat User::avatarColorClass(). */
+.avatar-1 { background-color: #00B14F; }
+.avatar-2 { background-color: #E91E63; }
+.avatar-3 { background-color: #5C68C0; }
+.avatar-4 { background-color: #FFA000; }
+.avatar-5 { background-color: #00897B; }
+.avatar-6 { background-color: #C2185B; }

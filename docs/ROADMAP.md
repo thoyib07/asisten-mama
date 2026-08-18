@@ -32,5 +32,20 @@ tinggal tambah tabel household-scoped baru + folder modul baru mengikuti pola Co
   implementasinya bisa niru `meal_categories` (array/jsonb + filter overlap) begitu ada kepastian
   target rilis publik; digarap sekali jadi dengan feedback user nyata, bukan ditebak sekarang.
 
+## UI / modul baru (dari redesign Figma 2026-08-18)
+- **Peserta acara** — `events` baru punya satu `user_id` (penanggung jawab). Frame Beranda
+  menumpuk beberapa avatar per acara; butuh pivot `event_user` kalau memang mau multi-peserta.
+- **Acara berulang** (mingguan/bulanan) belum ada — `events` menyimpan satu baris per kejadian.
+- **Kalender & Tugas belum punya Filament Resource**, beda dari Cooking/Finance.
+- **Keputusan terbuka: ubin "Tagihan" vs modul Finance.** Ubin Tagihan ada di grid Beranda tapi
+  sengaja dirender non-aktif karena belum jelas apakah ia modul Finance yang berganti nama, atau
+  fitur tagihan/langganan berulang yang terpisah. Selama belum diputuskan, `FinancePage` juga
+  tidak diredesain (masih pola kartu Tailwind lama, meski sudah ikut palet baru).
+- **Kolom kategori item belanja** (Dapur / Kamar Mandi dst). Frame Figma mengelompokkan daftar
+  belanja per ruangan, tapi `shopping_list_items` belum punya kolomnya.
+- **Harga item belanja** — frame menampilkan "Estimasi Total Budget"; sementara diganti jumlah item
+  belum dibeli sampai ada kolom harga.
+- **Preferensi notifikasi** — baris toggle ada di frame Profil, belum ada penyimpanannya.
+
 ## Billing
 - Belum ada infrastruktur billing/subscription (Stripe/Cashier) — di luar cakupan MVP zero-budget.
