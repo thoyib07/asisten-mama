@@ -1,5 +1,7 @@
 <?php
 
+use App\Modules\Bills\Models\Bill;
+use App\Modules\Bills\Models\BillPayment;
 use App\Modules\Calendar\Models\Event;
 use App\Modules\Finance\Models\Category;
 use App\Modules\Finance\Models\Transaction;
@@ -81,4 +83,36 @@ it('never leaks events or tasks across households', function () {
     auth()->login($userA);
     expect(Event::count())->toBe(1);
     expect(Task::count())->toBe(1);
+});
+
+it('never leaks bills or their payments across households', function () {
+    $userA = makeHouseholdUser('Hendra');
+    $userB = makeHouseholdUser('Indah');
+
+    auth()->login($userA);
+    $billA = Bill::create([
+        'name' => 'Listrik PLN',
+        'rrule' => 'FREQ=MONTHLY;BYMONTHDAY=20',
+        'starts_on' => now()->startOfMonth()->addDays(19),
+        'reminder_days_before' => 2,
+    ]);
+    $paymentA = BillPayment::create([
+        'bill_id' => $billA->id,
+        'period_on' => now()->startOfMonth()->addDays(19),
+        'amount' => 432500,
+        'user_id' => $userA->id,
+        'paid_at' => now(),
+    ]);
+
+    auth()->login($userB);
+    expect(Bill::count())->toBe(0);
+    expect(BillPayment::count())->toBe(0);
+    expect(Bill::whereKey($billA->id)->exists())->toBeFalse();
+    expect(BillPayment::whereKey($paymentA->id)->exists())->toBeFalse();
+    // Termasuk lewat penelusuran relasi, bukan cuma query langsung.
+    expect(Bill::withoutGlobalScope('household')->find($billA->id)->payments()->count())->toBe(0);
+
+    auth()->login($userA);
+    expect(Bill::count())->toBe(1);
+    expect(BillPayment::count())->toBe(1);
 });

@@ -5,7 +5,6 @@ Fitur yang ditunda secara sengaja. Tambahkan saat ada kebutuhan nyata.
 ## Modul lanjutan (belum dibangun)
 - Edukasi anak (child education helper)
 - Perawatan anak sakit (sick-child care tracker)
-- Pengingat bayar tagihan (bill payment reminders)
 
 Fondasi `Household` + `BelongsToHousehold` sudah dirancang menampung modul-modul ini tanpa rombak —
 tinggal tambah tabel household-scoped baru + folder modul baru mengikuti pola Cooking/ShoppingList/Finance.
@@ -37,10 +36,11 @@ tinggal tambah tabel household-scoped baru + folder modul baru mengikuti pola Co
   menumpuk beberapa avatar per acara; butuh pivot `event_user` kalau memang mau multi-peserta.
 - **Acara berulang** (mingguan/bulanan) belum ada — `events` menyimpan satu baris per kejadian.
 - **Kalender & Tugas belum punya Filament Resource**, beda dari Cooking/Finance.
-- **Keputusan terbuka: ubin "Tagihan" vs modul Finance.** Ubin Tagihan ada di grid Beranda tapi
-  sengaja dirender non-aktif karena belum jelas apakah ia modul Finance yang berganti nama, atau
-  fitur tagihan/langganan berulang yang terpisah. Selama belum diputuskan, `FinancePage` juga
-  tidak diredesain (masih pola kartu Tailwind lama, meski sudah ikut palet baru).
+- ~~**Keputusan terbuka: ubin "Tagihan" vs modul Finance.**~~ **Diputuskan 2026-08-19: fitur
+  terpisah.** Tagihan = pengingat jatuh tempo lewat Google Calendar (`docs/prd/tagihan.md`),
+  Finance = cash flow model kantong (`docs/prd/finance.md`). Ubin Tagihan sudah aktif.
+  `FinancePage` masih belum diredesain (pola kartu Tailwind lama, meski sudah ikut palet baru) —
+  sekarang murni karena antre di belakang fitur kantong, bukan lagi karena keputusan menggantung.
 - **Kolom kategori item belanja** (Dapur / Kamar Mandi dst). Frame Figma mengelompokkan daftar
   belanja per ruangan, tapi `shopping_list_items` belum punya kolomnya.
 - **Harga item belanja** — frame menampilkan "Estimasi Total Budget"; sementara diganti jumlah item

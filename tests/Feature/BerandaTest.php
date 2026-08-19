@@ -1,6 +1,8 @@
 <?php
 
 use App\Livewire\Beranda;
+use App\Modules\Bills\Models\Bill;
+use App\Modules\Bills\Services\RecordBillPayment;
 use App\Modules\Calendar\Models\Event;
 use App\Modules\ShoppingList\Models\ShoppingList;
 use App\Modules\Tasks\Models\Task;
@@ -46,4 +48,48 @@ it('shows the nearest upcoming event and real task progress', function () {
         ->assertSee('Acara terdekat')
         ->assertDontSee('Acara jauh')
         ->assertDontSee('Acara kemarin');
+});
+
+it('counts only bills that are due soon or overdue', function () {
+    auth()->login(makeHouseholdUser('Hesti'));
+
+    // Jatuh tempo kemarin, belum dibayar — harus dihitung.
+    Bill::create([
+        'name' => 'Telat',
+        'starts_on' => now()->subDay()->toDateString(),
+        'reminder_days_before' => 2,
+    ]);
+
+    // Jatuh tempo lusa — masih dalam jendela 7 hari.
+    Bill::create([
+        'name' => 'Sebentar lagi',
+        'starts_on' => now()->addDays(2)->toDateString(),
+        'reminder_days_before' => 2,
+    ]);
+
+    // Jatuh tempo dua bulan lagi — belum perlu muncul di lencana Beranda.
+    Bill::create([
+        'name' => 'Masih lama',
+        'starts_on' => now()->addMonths(2)->toDateString(),
+        'reminder_days_before' => 2,
+    ]);
+
+    Livewire::test(Beranda::class)->assertViewHas('dueBillCount', 2);
+});
+
+it('stops counting a bill once its due occurrence is paid', function () {
+    $user = makeHouseholdUser('Ivan');
+    auth()->login($user);
+
+    $bill = Bill::create([
+        'name' => 'Listrik',
+        'starts_on' => now()->subDay()->toDateString(),
+        'reminder_days_before' => 2,
+    ]);
+
+    Livewire::test(Beranda::class)->assertViewHas('dueBillCount', 1);
+
+    app(RecordBillPayment::class)->record($bill, now()->subDay()->toDateString(), 400000, $user);
+
+    Livewire::test(Beranda::class)->assertViewHas('dueBillCount', 0);
 });

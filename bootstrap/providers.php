@@ -1,5 +1,6 @@
 <?php
 
+use App\Modules\Bills\Providers\BillsServiceProvider;
 use App\Modules\Calendar\Providers\CalendarServiceProvider;
 use App\Modules\Cooking\Providers\CookingServiceProvider;
 use App\Modules\Finance\Providers\FinanceServiceProvider;
@@ -18,4 +19,5 @@ return [
     HouseholdServiceProvider::class,
     CalendarServiceProvider::class,
     TasksServiceProvider::class,
+    BillsServiceProvider::class,
 ];

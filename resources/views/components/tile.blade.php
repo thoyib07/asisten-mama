@@ -1,5 +1,4 @@
-{{-- Ubin grid Beranda (docs/ui-design.md §5.1). Tanpa :href ubin dirender non-aktif —
-     dipakai untuk modul yang tujuannya belum diputuskan (mis. Tagihan). --}}
+{{-- Ubin grid Beranda (docs/ui-design.md §5.1). Tanpa :href ubin dirender non-aktif. --}}
 @props(['label', 'icon', 'tone', 'href' => null, 'count' => 0])
 
 <{{ $href ? 'a' : 'div' }}

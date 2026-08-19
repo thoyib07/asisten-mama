@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 A household-assistant SaaS for families ("asisten mama"): each family (household) gets its own
 scoped data across modules. Modules: Cooking (recipe finder, ported from the standalone
-cooking-mama-git prototype), Shopping List, Financial tracking, Calendar, Tasks, Household. Laravel 13 + Livewire 4
+cooking-mama-git prototype), Shopping List, Financial tracking, Bills, Calendar, Tasks, Household. Laravel 13 + Livewire 4
 (customer-facing UI) + Filament 5 (admin/CRUD). PHP 8.3, PostgreSQL, Pest 4.
 
 ## Commands
@@ -37,7 +37,8 @@ including via relation traversal (see `HouseholdIsolationTest`).
 
 Scoping per table:
 - `households`, `household_user` — not scoped (they define the boundary).
-- `shopping_lists`, `categories`, `transactions`, `events`, `tasks` — household-scoped via the trait.
+- `shopping_lists`, `categories`, `transactions`, `events`, `tasks`, `bills`, `bill_payments` —
+  household-scoped via the trait.
 - `recipes`, `ingredients`, `recipe_ingredient` — shared/global catalog, NOT household-scoped.
   AI-imported recipes become visible to every household. Accepted MVP tradeoff.
 - `favorites`, `ratings` — scoped per `user_id` (personal preference, not household-shared).
@@ -51,7 +52,7 @@ categories, all in one transaction. Called from the custom Filament registration
 ### Module layout (custom, no package)
 
 ```
-app/Modules/{Cooking,ShoppingList,Finance,Calendar,Tasks,Household}/
+app/Modules/{Cooking,ShoppingList,Finance,Bills,Calendar,Tasks,Household}/
   Models/ Services/ Livewire/ Filament/ Providers/ routes/web.php
 ```
 
@@ -81,6 +82,31 @@ against `IngredientNormalizer::normalize()`'d input — exact-name matching, no 
 Groq, parsed by `AiResponseParser`, imported by `AiRecipeImporter` (dedups on `LOWER(TRIM(name))`).
 `Favorite`/`Rating` are `user_id`-scoped (real accounts now — the original prototype used anonymous
 cookie/session tokens, since replaced).
+
+### Bills module
+
+Bill due dates are never stored as rows. `bills.rrule` holds a raw RFC 5545 string, expanded on
+demand by `BillSchedule` (`rlanvin/php-rrule`) — so recurring reminders need **no scheduler/cron**,
+which matters because this app has none (`routes/console.php` is empty, no cron in the Dockerfile).
+
+Reminders reach the family through an **ICS subscription feed**, not the Google Calendar API:
+`calendar.events` is a Google "sensitive" scope requiring app verification, capped at 100 test users
+until approved. See `docs/prd/tagihan.md` §6.3.
+
+`IcsFeed` emits one all-day VEVENT **per occurrence** rather than one recurring VEVENT + RRULE.
+Reason: events are placed on the *reminder* date, and shifting `DTSTART` does NOT shift a rule's
+occurrences (`FREQ=MONTHLY;BYMONTHDAY=20` stays on the 20th regardless of `DTSTART`). Expanding in
+PHP also means a user-typed RRULE never reaches Google verbatim. Don't "simplify" this back into an
+RRULE + EXDATE.
+
+**The feed route runs without a session** — the token is the auth. `BelongsToHousehold` filters on
+`Auth::user()?->current_household_id`, which is `null` there, so every read on that path must use
+`withoutGlobalScope('household')` plus an explicit household filter. This already bit once:
+`BillSchedule::paidPeriods()` silently returned nothing when unauthenticated, resurrecting paid
+bills in the calendar. There is a dedicated unauthenticated test for it.
+
+`RecordBillPayment` writes a `Transaction` into Finance when a bill is marked paid — one-way
+Bills → Finance, the same shape as `MissingIngredientsToShoppingList`.
 
 ### Shopping List ↔ Cooking integration
 

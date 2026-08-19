@@ -17,4 +17,5 @@ it('renders every customer-facing page for a household member', function (string
     '/favorites',
     '/keluarga',
     '/finance',
+    '/tagihan',
 ]);

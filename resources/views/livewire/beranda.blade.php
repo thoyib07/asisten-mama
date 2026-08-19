@@ -1,7 +1,5 @@
 <div>
     @php
-        // ponytail: ubin Tagihan sengaja tanpa href — keputusan Tagihan-vs-Finance masih terbuka
-        // (docs/ROADMAP.md). Render non-aktif, jangan tebak tujuannya.
         $tiles = [
             ['label' => 'Kalender', 'tone' => 'tile-kalender', 'href' => route('kalender'), 'count' => $todayEventCount,
              'icon' => 'M4 6.75A1.75 1.75 0 0 1 5.75 5h12.5A1.75 1.75 0 0 1 20 6.75v12.5A1.75 1.75 0 0 1 18.25 21H5.75A1.75 1.75 0 0 1 4 19.25zM4 10h16M8 3v4M16 3v4'],
@@ -11,7 +9,7 @@
              'icon' => 'M3 4h2l2.4 11.2a1.5 1.5 0 0 0 1.5 1.2h8.2a1.5 1.5 0 0 0 1.5-1.2L21 8H6M9 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2M18 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2'],
             ['label' => 'Resep', 'tone' => 'tile-resep', 'href' => route('recipes.index'), 'count' => $newRecipeCount,
              'icon' => 'M7 21h10M6 8a3 3 0 0 1 3-3 3 3 0 0 1 6 0 3 3 0 0 1 3 3 3 3 0 0 1-2 2.83V17H8v-6.17A3 3 0 0 1 6 8'],
-            ['label' => 'Tagihan', 'tone' => 'tile-tagihan',
+            ['label' => 'Tagihan', 'tone' => 'tile-tagihan', 'href' => route('tagihan'), 'count' => $dueBillCount,
              'icon' => 'M3 8.75A1.75 1.75 0 0 1 4.75 7h14.5A1.75 1.75 0 0 1 21 8.75v6.5A1.75 1.75 0 0 1 19.25 17H4.75A1.75 1.75 0 0 1 3 15.25zM3 11h18M6.5 14h3'],
         ];
     @endphp

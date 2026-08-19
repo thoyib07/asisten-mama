@@ -64,6 +64,24 @@ class Household extends Model
         return $household;
     }
 
+    /**
+     * Token feed ICS, dibuat saat pertama kali dibutuhkan supaya household lama tidak perlu
+     * migration data — household yang tidak pernah membuka panel kalender tetap tanpa token.
+     */
+    public function calendarToken(): string
+    {
+        if (! $this->calendar_token) {
+            $this->forceFill(['calendar_token' => static::generateUniqueCalendarToken()])->save();
+        }
+
+        return $this->calendar_token;
+    }
+
+    public function regenerateCalendarToken(): void
+    {
+        $this->forceFill(['calendar_token' => static::generateUniqueCalendarToken()])->save();
+    }
+
     public function regenerateInviteCode(): void
     {
         $this->forceFill(['invite_code' => static::generateUniqueInviteCode()])->save();
@@ -94,6 +112,15 @@ class Household extends Model
                 static::createWithOwner($target, "Keluarga {$target->name}");
             }
         });
+    }
+
+    private static function generateUniqueCalendarToken(): string
+    {
+        do {
+            $token = Str::random(48);
+        } while (static::where('calendar_token', $token)->exists());
+
+        return $token;
     }
 
     private static function generateUniqueInviteCode(): string
