@@ -1,7 +1,9 @@
 <?php
 
+use App\Models\Admin;
 use App\Models\Household;
 use App\Models\User;
+use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -52,4 +54,18 @@ function makeHouseholdUser(string $name): User
     Household::createWithOwner($user, "Keluarga {$name}");
 
     return $user->fresh();
+}
+
+/**
+ * Filament resource di panel admin butuh dua hal: guard `admin` yang terautentikasi,
+ * dan panel `admin` sebagai panel aktif (panel default sekarang `app`).
+ */
+function actingAsSaasAdmin(string $role = Admin::ROLE_OWNER): Admin
+{
+    $admin = Admin::factory()->create(['role' => $role]);
+
+    auth('admin')->login($admin);
+    Filament::setCurrentPanel('admin');
+
+    return $admin;
 }

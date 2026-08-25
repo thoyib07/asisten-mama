@@ -33,4 +33,6 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-di
 ENV PORT=10000
 EXPOSE 10000
 
-CMD ["sh", "-c", "php artisan migrate --force && php artisan db:seed --class=RecipeSeeder --force && php artisan config:cache && php artisan serve --host=0.0.0.0 --port=${PORT}"]
+# AdminSeeder no-op kalau tabel admins sudah terisi, jadi aman dipanggil tiap boot. Ia satu-satunya
+# cara membuat admin pertama di Render paket gratis (tidak ada shell untuk make:saas-admin).
+CMD ["sh", "-c", "php artisan migrate --force && php artisan db:seed --class=RecipeSeeder --force && php artisan db:seed --class=AdminSeeder --force && php artisan config:cache && php artisan serve --host=0.0.0.0 --port=${PORT}"]

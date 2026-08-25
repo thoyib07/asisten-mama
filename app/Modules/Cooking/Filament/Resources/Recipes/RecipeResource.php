@@ -23,6 +23,7 @@ use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 
 class RecipeResource extends Resource
@@ -139,7 +140,14 @@ class RecipeResource extends Resource
                 TextColumn::make('servings')->sortable(),
                 TextColumn::make('created_at')->dateTime()->sortable(),
             ])
-            ->filters([])
+            ->filters([
+                SelectFilter::make('source')
+                    ->label('Sumber')
+                    ->options([
+                        Recipe::SOURCE_SEED => 'Seed',
+                        Recipe::SOURCE_AI => 'AI',
+                    ]),
+            ])
             ->recordActions([EditAction::make()])
             ->toolbarActions([
                 BulkActionGroup::make([DeleteBulkAction::make()]),

@@ -47,21 +47,34 @@ Cooking → ShoppingList → Finance
 B→A)? Kalau iya, itu tanda desainnya perlu dipikir ulang — biasanya berarti ada konsep yang
 harusnya diekstrak jadi infra lintas-modul (§1.3), bukan tetap di salah satu modul.
 
-## 3. Pemisahan panel admin (baru — dari `admin-cms.md`)
+## 3. Pemisahan panel admin (terpasang 2026-08-25)
 
-Sebelum `admin-cms.md`, cuma ada **satu panel Filament** (`/admin`) yang dipakai ganda: registrasi
-household **dan** CRUD `RecipeResource` — tidak ada pemisahan role sama sekali. Ini diperbaiki jadi
-**dua panel terpisah total**, guard berbeda:
+Sebelumnya cuma ada **satu panel Filament** (`/admin`) yang dipakai ganda: registrasi household
+**dan** CRUD `RecipeResource` — tidak ada pemisahan role sama sekali, jadi household mana pun yang
+login bisa mengedit katalog resep global. Sekarang **dua panel terpisah total**, guard dan tabel
+berbeda:
 
 | Panel | Path | Guard | Model | Isi |
 |---|---|---|---|---|
-| Household | `/admin` | `web` | `User` | Registrasi household saja (lewat `Register::class`). Setelah `admin-cms.md` selesai, **tidak lagi** py resource CRUD apa pun. |
-| Super Admin | `/super-admin` | `admin` (baru) | `Admin` (baru, tabel `admins`) | Semua Filament Resource (Recipe, Household, User, ShoppingList, Finance, dst) — CRUD penuh lintas household. |
+| App (auth customer) | `/` | `web` | `User` | Hanya `/login`, `/register`, `/password-reset/*`. **Tanpa resource dan tanpa page.** |
+| Backoffice | `/backoffice` | `admin` | `Admin` (tabel `admins`) | Filament Resource lintas household + halaman profil admin. |
 
-**Aturan:** Resource Filament CRUD **baru** untuk data lintas-household **selalu** didaftarkan ke
-panel `super-admin`, tidak pernah ke panel `admin` household. Kalau ada kebutuhan household lihat
-data mereka sendiri (bukan CRUD admin), itu Livewire component biasa di sisi household, bukan
-Filament Resource.
+Path-nya berbeda dari rencana di `admin-cms.md` (`/super-admin`): `/admin` sudah beredar sebagai
+URL login **customer**, jadi dipakai sebagai redirect permanen ke `/login` dan tidak boleh
+ditempati panel mana pun. Lihat header `admin-cms.md` untuk daftar lengkap penyimpangannya.
+
+**Aturan 1 — tempat resource.** Resource Filament CRUD untuk data lintas-household **selalu** ke
+panel `backoffice`. Panel `app` tidak boleh punya resource sama sekali. Kalau household perlu
+melihat datanya sendiri, itu Livewire component biasa di sisi customer, bukan Filament Resource.
+
+**Aturan 2 — global scope tidak berlaku di backoffice.** `BelongsToHousehold` memfilter lewat
+`Auth::user()`, yang membaca guard *default* (`web`) dan bernilai null saat admin login di guard
+`admin`. Gagalnya ke arah aman (query balik kosong), tapi resource backoffice atas tabel
+household-scoped **wajib** `withoutGlobalScope('household')` plus filter eksplisit.
+
+**Aturan 3 — otorisasi lewat `get*AuthorizationResponse()`, bukan `can*()`.** Aksi Filament
+merutekan otorisasi lewat method `Response`; `can*()` cuma turunannya dan tidak pernah dilihat
+DeleteAction. Ini pernah lolos ke kode sekali. Uji dengan menjalankan aksi tabel sungguhan.
 
 ## 4. Pola kuota & data turunan (snapshot), bukan hitung ulang
 

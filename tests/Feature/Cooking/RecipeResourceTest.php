@@ -6,8 +6,7 @@ use App\Modules\Cooking\Models\Recipe;
 use Livewire\Livewire;
 
 it('lets an admin create a recipe and tag a primary ingredient via the reactive select', function () {
-    $user = makeHouseholdUser('Indra');
-    auth()->login($user);
+    actingAsSaasAdmin();
 
     $telur = Ingredient::firstOrCreate(['name' => 'telur']);
     $garam = Ingredient::firstOrCreate(['name' => 'garam']);
@@ -37,8 +36,7 @@ it('lets an admin create a recipe and tag a primary ingredient via the reactive 
 });
 
 it('stores null instead of an all-null array when the nutrition fieldset is left blank', function () {
-    $user = makeHouseholdUser('Joko');
-    auth()->login($user);
+    actingAsSaasAdmin();
 
     Livewire::test(CreateRecipe::class)
         ->fillForm([

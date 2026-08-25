@@ -89,11 +89,11 @@
                 <p class="truncate font-bold">{{ auth()->user()->name }}</p>
                 <p class="truncate text-xs text-ink-soft">{{ auth()->user()->email }}</p>
             </div>
-            <button
-                wire:click="logout"
-                wire:confirm="Keluar dari akun?"
-                class="text-danger shrink-0 text-sm font-bold"
-            >Keluar</button>
+            <a
+                wire:navigate
+                href="{{ route('akun') }}"
+                class="text-accent shrink-0 text-sm font-bold"
+            >Akun</a>
         </div>
     </div>
 

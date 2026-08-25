@@ -1,6 +1,23 @@
 # PRD: CMS Super Admin
 
-> **Status dokumen:** Greenfield — belum ada implementasi sama sekali (sama seperti `billing.md`).
+> **Status dokumen: SEBAGIAN USANG (per 2026-08-25).** Fiturnya sudah dibangun, tapi dengan
+> beberapa keputusan yang berbeda dari dokumen ini. Yang berlaku adalah kode + `CLAUDE.md`
+> ("Two Filament panels, two guards, two tables"); dokumen ini disimpan untuk konteks kenapa
+> fiturnya ada, bukan sebagai spesifikasi yang akurat.
+>
+> | Hal | Rencana di dokumen ini | Yang dibangun |
+> |---|---|---|
+> | Path panel | `/super-admin` | `/backoffice` (`/admin` dipakai redirect bookmark customer lama) |
+> | Jumlah akun admin | satu (pemilik produk) | banyak |
+> | Role/permission | Non-Goal (§3) | ditegakkan: `owner` boleh kelola admin, `admin` tidak |
+> | Auth customer | tetap di panel `/admin` | panel sendiri di root (`/login`, `/register`) |
+> | Resource | CRUD penuh lintas semua modul | Household & Customer read-only; Recipe & Admin CRUD |
+>
+> Asumsi "cuma satu akun admin" yang mendasari Non-Goal role/permission di §3 **sudah tidak
+> berlaku** — lihat `docs/ROADMAP.md` § "Role & permission admin SaaS" untuk arah selanjutnya.
+> Modul yang belum punya resource di backoffice (ShoppingList, Finance, Billing) memang belum
+> dikerjakan; bagian dokumen ini soal itu masih relevan.
+>
 > **Mengubah/menggantikan `docs/prd/billing.md` §6.5** (dashboard pemantauan AI usage) — fitur itu
 > jadi salah satu bagian di dalam CMS ini, bukan halaman berdiri sendiri (lihat §5).
 

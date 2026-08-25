@@ -2,7 +2,6 @@
 
 namespace App\Providers\Filament;
 
-use App\Filament\Pages\Auth\Register;
 use App\Modules\Cooking\Providers\CookingPanelPlugin;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -12,8 +11,6 @@ use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
-use Filament\Widgets\AccountWidget;
-use Filament\Widgets\FilamentInfoWidget;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
@@ -26,12 +23,17 @@ class AdminPanelProvider extends PanelProvider
     public function panel(Panel $panel): Panel
     {
         return $panel
-            ->default()
             ->id('admin')
-            ->path('admin')
+            // Bukan /admin: URL itu sudah beredar sebagai halaman login CUSTOMER sebelum panel
+            // dipisah, dan sekarang jadi redirect ke /login (routes/web.php). Satu URL tidak bisa
+            // melayani dua guard sekaligus — customer di sana akan ditolak "credentials do not
+            // match" padahal passwordnya benar.
+            ->path('backoffice')
+            ->authGuard('admin')
             ->login()
-            ->registration(Register::class)
-            ->passwordReset()
+            // Admin non-owner tidak punya akses ke AdminResource, jadi halaman profil ini
+            // satu-satunya cara dia mengganti nama/passwordnya sendiri.
+            ->profile()
             ->colors([
                 'primary' => Color::Amber,
             ])
@@ -44,10 +46,6 @@ class AdminPanelProvider extends PanelProvider
                 Dashboard::class,
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
-            ->widgets([
-                AccountWidget::class,
-                FilamentInfoWidget::class,
-            ])
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,

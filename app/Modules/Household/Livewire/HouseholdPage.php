@@ -39,15 +39,6 @@ class HouseholdPage extends Component
         }
     }
 
-    public function logout(): void
-    {
-        Auth::logout();
-        request()->session()->invalidate();
-        request()->session()->regenerateToken();
-
-        $this->redirect(route('filament.admin.auth.login'), navigate: false);
-    }
-
     private function household(): Household
     {
         $household = auth()->user()->currentHousehold()->with('users')->first();

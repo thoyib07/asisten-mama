@@ -26,6 +26,67 @@ Create the test DB once: `docker exec asisten-mama-db-1 psql -U postgres -c "CRE
 
 ## Architecture
 
+### Two Filament panels, two guards, two tables
+
+SaaS admins live in their own `admins` table (`App\Models\Admin`, guard `admin`), never in
+`users`. That split is what makes the panel separation work at all:
+`vendor/filament/filament/src/Auth/Pages/Login.php` calls `attemptWhen(..., canAccessPanel())`, so a
+single panel can NOT be both "everyone's login page" and "admin-only backoffice" — gating
+`canAccessPanel()` would block customers from logging in entirely. Separate guards sidestep it:
+`User::canAccessPanel()` is never consulted for the admin panel.
+
+- **`app` panel** (`AppPanelProvider`, path `''`, guard `web`) — the panel is `->default()` and
+  deliberately has **no resources and no pages**. Its only job is customer auth: `/login`,
+  `/register` (with the invite-code field), `/password-reset/*`. `bootstrap/app.php` routes guests
+  through `filament()->getLoginUrl()`, so the default panel is what `/` redirects to.
+  The empty path does **not** collide with Beranda: on Laravel 13+ Filament registers its panel
+  `home` route only when no GET route exists at the panel root yet
+  (`vendor/filament/filament/routes/web.php`), and `routes/web.php` claims `/` first. That means
+  route-registration order matters — if `filament.app.home` ever shows up in `route:list` and `/`
+  stops resolving to Beranda, that ordering is what broke.
+- **`admin` panel** (`AdminPanelProvider`, path `/backoffice`, guard `admin`) — backoffice only.
+  **Not** `/admin`: that URL was the *customer* login/registration page before the panels were
+  split, so bookmarks for it are in circulation. `routes/web.php` permanently redirects
+  `/admin/login` → `/login`, `/admin/register` → `/register`, `/admin` → `/`. One URL cannot serve
+  two guards — a customer landing on an admin-guard login gets "credentials do not match" while
+  holding the correct password.
+
+  There is deliberately no public registration page. The *first* admin comes from `AdminSeeder`
+  (env `ADMIN_NAME`/`ADMIN_EMAIL`/`ADMIN_PASSWORD`, wired into the Dockerfile `CMD`) or
+  `php artisan make:saas-admin` locally; after that `AdminResource` at `/backoffice/admins` is the
+  CRUD. `Admin::roleOptions()` is the single source of roles — command, form, and seeder all use it.
+
+  **`AdminResource` is owner-only, in full.** Gating only `create` would be theatre: an admin who
+  can still *edit* another admin can change the owner's password and log in as them. Non-owner
+  admins change their own name/password through the panel's `->profile()` page instead. Deleting
+  *yourself* is blocked, which is what guarantees at least one admin always survives without
+  counting rows, and the resource registers **no** bulk delete (that path authorizes through
+  `getDeleteAnyAuthorizationResponse()` with no per-record check, so one action could wipe every
+  admin).
+
+**Authorize Filament resources by overriding `get*AuthorizationResponse()`, never `can*()`.**
+`can*()` is a derived helper (`Resource/Concerns/HasAuthorization.php:154`) consumed only by page
+`mount()` guards and navigation. Actions route through
+`Resources/Pages/Page::getDefaultActionAuthorizationResponse()`, which calls the `Response` methods
+directly — so a `canDelete()` override looks correct, tests green against it, and the UI deletes the
+row anyway. This shipped once in `AdminResource` and was caught only by driving the real table
+action in a test. Test authorization by calling the action, not the helper.
+
+`App\Http\Responses\LoginResponse` + `RegistrationResponse` override Filament's default
+`redirect()->intended(Filament::getUrl())` so app-panel users land on `route('beranda')`. They
+branch on panel id and defer to the parent for anything that isn't `app` — keep it that way, so a
+bug there can't break admin login.
+
+**Household-scoped models are invisible from the admin panel.** `BelongsToHousehold` filters on
+`Auth::user()?->current_household_id`, and `Auth::user()` reads the *default* guard (`web`), which
+is null when an admin is authenticated on the `admin` guard. It fails closed, so `households`,
+`users` and `recipes` (none of them scoped) are fine — but any future admin resource over a scoped
+table MUST use `withoutGlobalScope('household')` plus an explicit filter. Same trap as the ICS feed
+route (see Bills module).
+
+Filament page classes resolve against the *current* panel, so tests driving an admin resource need
+both the guard and the panel: use the `actingAsSaasAdmin()` helper in `tests/Pest.php`.
+
 ### Multi-tenancy: Household, not Filament tenancy
 
 The security boundary is `users.current_household_id` + the `App\Support\Concerns\BelongsToHousehold`

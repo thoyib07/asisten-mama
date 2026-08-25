@@ -9,9 +9,11 @@ use App\Modules\ShoppingList\Providers\ShoppingListServiceProvider;
 use App\Modules\Tasks\Providers\TasksServiceProvider;
 use App\Providers\AppServiceProvider;
 use App\Providers\Filament\AdminPanelProvider;
+use App\Providers\Filament\AppPanelProvider;
 
 return [
     AppServiceProvider::class,
+    AppPanelProvider::class,
     AdminPanelProvider::class,
     CookingServiceProvider::class,
     ShoppingListServiceProvider::class,

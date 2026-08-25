@@ -17,6 +17,49 @@ tinggal tambah tabel household-scoped baru + folder modul baru mengikuti pola Co
 - Tenancy Filament native (`->tenant()`) — hanya relevan jika suatu saat butuh UX ganti-ganti
   household yang lebih kaya daripada satu household per user.
 
+## Role & permission admin SaaS (naikkan dari kolom string ke library)
+
+**Kondisi sekarang (2026-08-25).** Otorisasi admin dipegang satu kolom string `admins.role` dengan
+dua nilai, `owner` dan `admin`, sumbernya `Admin::roleOptions()`. Yang membedakannya persis satu
+hal: owner boleh mengelola akun admin, admin biasa tidak. Penegakannya ada di dua tempat saja —
+`Admin::isOwner()` dan `AdminResource::ownerOnly()` (dipakai oleh `getViewAny`/`getCreate`/
+`getEdit`/`getDelete` + `shouldRegisterNavigation`). Resource lain di panel backoffice
+(`HouseholdResource`, `UserResource`, `RecipeResource`) belum melihat role sama sekali.
+
+Ini cukup untuk dua peran. Begitu muncul peran ketiga, atau begitu butuh beda hak **per resource**
+(mis. staf yang boleh lihat Customer tapi tidak boleh sentuh katalog resep), pola `if ($this->role
+=== ...)` akan menyebar ke tiap resource dan jadi mahal dirawat. Titik itulah waktunya pindah ke
+library.
+
+**Kandidat: `spatie/laravel-permission`.** Sudah disebut sebagai kandidat di
+`docs/prd/admin-cms.md` §3 (waktu itu sebagai Non-Goal, karena rencananya cuma satu akun admin —
+asumsi itu sudah tidak berlaku). Diverifikasi terhadap dokumentasi v7: package ini mendukung
+**multiple guards**, dan model Authenticatable non-`User` bisa memakai trait `HasRoles` dengan
+`$guard_name` sendiri — persis bentuk yang kita butuhkan.
+
+**Hal-hal spesifik codebase ini yang akan menggigit kalau tidak disiapkan:**
+
+- **Dua guard, dan role hanya boleh untuk satu.** Aplikasi punya guard `web` (model `User`,
+  customer) dan `admin` (model `Admin`). Spatie mengunci setiap role/permission ke satu guard,
+  jadi `Admin` wajib mendeklarasikan `protected string $guard_name = 'admin';`. Tanpa itu role
+  admin bocor ke namespace guard `web` dan pengecekannya diam-diam selalu false.
+- **Jangan campur dengan role household.** `household_user.pivot.role` (`owner`/`member`) sudah ada
+  dan memakai istilah yang sama, tapi sumbunya beda total: itu peran seseorang di dalam
+  keluarganya, bukan peran internal SaaS. Keduanya harus tetap terpisah — jangan tergoda
+  menyatukan karena namanya mirip.
+- **Otorisasi Filament lewat `get*AuthorizationResponse()`, bukan `can*()`.** Lihat catatan di
+  CLAUDE.md. Ini pernah menggigit sekali: override `canDelete()` lulus test tapi UI tetap
+  menghapus barisnya. Plugin yang menghasilkan Policy otomatis berinteraksi dengan jalur ini —
+  verifikasi dengan menjalankan aksi tabel sungguhan di test, bukan memanggil helper-nya.
+- **Migrasi datanya kecil.** Cukup `admins.role` → assign role Spatie, lalu kolomnya di-drop.
+  Jumlah barisnya sedikit, jadi ini bukan bagian yang sulit.
+
+**Plugin Filament untuk Spatie** (`bezhanSalleh/filament-shield` dan alternatif yang lebih baru)
+mengotomatiskan pembuatan Policy per Resource/Page/Widget. **Cek dulu dukungan Filament 5-nya saat
+mengerjakan** — project ini di Filament 5, dan status kompatibilitas plugin-plugin itu belum
+terverifikasi per catatan ini ditulis. Kalau belum ada yang matang, `spatie/laravel-permission`
+polos tanpa plugin sudah cukup: titik penegakannya cuma segelintir method di resource.
+
 ## Cooking
 - Resep tetap katalog global/shared, bukan per-household. Jika ini jadi masalah (mis. AI import
   satu keluarga muncul di keluarga lain), pertimbangkan kolom `household_id` nullable di `recipes`.

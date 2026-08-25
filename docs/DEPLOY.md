@@ -37,20 +37,36 @@ Zero-budget stack, same as the cooking-mama-git prototype: Render + Neon + Groq.
 | `SESSION_DRIVER` | `database` |
 | `CACHE_STORE` | `database` |
 
-No `ADMIN_EMAIL`/`ADMIN_PASSWORD` — there's no seeded admin account; real users register via
-`/admin/register`, which creates their household automatically.
+Customers register themselves via `/register`, which creates their household automatically.
+
+The SaaS admin lives in its own table and has no registration page. Render's free plan has **no
+shell**, so `php artisan make:saas-admin` cannot be run after deploy — set these three env vars
+instead and `AdminSeeder` (already in the Dockerfile `CMD`) creates the first owner on boot:
+
+| Key | Value |
+|---|---|
+| `ADMIN_NAME` | Display name (defaults to `Owner`) |
+| `ADMIN_EMAIL` | Login email |
+| `ADMIN_PASSWORD` | Initial password |
+
+The seeder only runs while the `admins` table is **empty**, so it is a no-op on every later boot —
+and it doubles as the recovery path if every admin is ever lost. **Delete `ADMIN_PASSWORD` from the
+Render dashboard once the account exists.**
 
 ### 4. Verify Deploy
-- `/` — recipe finder loads, seeded recipes visible.
-- `/admin/register` — sign up, confirm redirect into a working household-scoped session.
-- `/shopping-list`, `/finance` — accessible once logged in, empty-state renders correctly.
+- `/` — redirects a guest to `/login`.
+- `/register` — sign up, confirm redirect into Beranda with a working household-scoped session.
+- `/shopping-list`, `/finance`, `/akun` — accessible once logged in, empty-state renders correctly.
 - `/manifest.json` — valid JSON; try "Add to Home Screen" on mobile.
-- `/admin` — Filament panel loads, Recipes resource visible (registered via `CookingPanelPlugin`).
+- `/admin/login` and `/admin` — must 301 to `/login` and `/` (old customer bookmarks).
+- `/backoffice/login` — only an `admins` row can log in here; a customer's credentials must be rejected.
+- `/backoffice` — Filament backoffice loads with the overview widget plus Keluarga, Customer, and Recipes.
+- `/backoffice/admins` — visible to an `owner`, forbidden (403) for a plain `admin`.
 
 ## Free-Tier Limits to Watch
 - **Neon**: 512MB storage, compute sleeps after 5 min idle.
 - **Render free**: spins down after 15 min inactivity (cold start on next request); local
-  filesystem is ephemeral — recipe images uploaded via `/admin` are lost on redeploy/restart
+  filesystem is ephemeral — recipe images uploaded via `/backoffice` are lost on redeploy/restart
   unless moved to external storage (S3, Cloudinary, etc.) — not solved yet, see `docs/ROADMAP.md`.
 - **Groq API**: free-tier rate limit; AI recipe suggestions are cached 6 hours per unique
   ingredient set to stay well under it.
