@@ -11,7 +11,7 @@ it('refuses a category belonging to another household', function () {
 
     // Kategori default sudah di-seed oleh Household::createWithOwner untuk tiap keluarga.
     auth()->login($budi);
-    $budiCategory = Category::first();
+    $budiCategory = Category::where('type', 'expense')->first();
     expect($budiCategory)->not->toBeNull();
 
     auth()->login($rina);
@@ -30,7 +30,7 @@ it('accepts a category from the acting household', function () {
     $rina = makeHouseholdUser('Rina');
     auth()->login($rina);
 
-    $own = Category::first();
+    $own = Category::where('type', 'expense')->first();
 
     Livewire::test(FinancePage::class)
         ->set('categoryId', $own->id)

@@ -90,3 +90,28 @@ it('rejects a period that is not a valid date before touching the database', fun
     expect(BillPayment::count())->toBe(0)
         ->and(Transaction::count())->toBe(0);
 });
+
+it('tetap memetakan pengeluaran ke kantong household walau tidak ada sesi user', function () {
+    // Sejak kantong wajib untuk pengeluaran (finance.md §6.6), jalur ini tidak boleh menghasilkan
+    // transaksi tanpa kategori. Category::active() memfilter lewat Auth::user(), jadi tanpa sesi
+    // lookup-nya kosong kalau household-nya tidak difilter eksplisit.
+    $bill = payableBill();
+    auth()->logout();
+
+    $this->service->record($bill, '2026-05-20', 400000, $this->owner);
+
+    $transaction = Transaction::withoutGlobalScope('household')->firstOrFail();
+
+    expect($transaction->category_id)->not->toBeNull();
+    expect(Category::withoutGlobalScope('household')->find($transaction->category_id)->household_id)
+        ->toBe($bill->household_id);
+});
+
+it('jatuh ke kantong pengeluaran lain kalau kategori Tagihan sudah diganti namanya', function () {
+    Category::where('name', 'Tagihan')->update(['name' => 'Listrik & Air']);
+
+    $bill = payableBill();
+    $this->service->record($bill, '2026-06-20', 400000, $this->owner);
+
+    expect(Transaction::first()->category_id)->not->toBeNull();
+});

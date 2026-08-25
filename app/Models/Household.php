@@ -13,7 +13,7 @@ use RuntimeException;
 
 class Household extends Model
 {
-    protected $fillable = ['name'];
+    protected $fillable = ['name', 'budget_period_reset_day'];
 
     public function users(): BelongsToMany
     {

@@ -21,7 +21,7 @@ class DefaultCategories
     public static function seedFor(Household $household): void
     {
         foreach (self::DEFAULTS as $category) {
-            $household->categories()->create($category);
+            $household->categories()->create($category + ['is_default' => true]);
         }
     }
 }

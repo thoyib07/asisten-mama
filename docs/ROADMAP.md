@@ -82,13 +82,30 @@ polos tanpa plugin sudah cukup: titik penegakannya cuma segelintir method di res
 - ~~**Keputusan terbuka: ubin "Tagihan" vs modul Finance.**~~ **Diputuskan 2026-08-19: fitur
   terpisah.** Tagihan = pengingat jatuh tempo lewat Google Calendar (`docs/prd/tagihan.md`),
   Finance = cash flow model kantong (`docs/prd/finance.md`). Ubin Tagihan sudah aktif.
-  `FinancePage` masih belum diredesain (pola kartu Tailwind lama, meski sudah ikut palet baru) —
-  sekarang murni karena antre di belakang fitur kantong, bukan lagi karena keputusan menggantung.
+  `FinancePage` sudah diredesain ikut token palet baru bareng fitur kantong (2026-08-26).
 - **Kolom kategori item belanja** (Dapur / Kamar Mandi dst). Frame Figma mengelompokkan daftar
   belanja per ruangan, tapi `shopping_list_items` belum punya kolomnya.
 - **Harga item belanja** — frame menampilkan "Estimasi Total Budget"; sementara diganti jumlah item
   belum dibeli sampai ada kolom harga.
 - **Preferensi notifikasi** — baris toggle ada di frame Profil, belum ada penyimpanannya.
+
+## Finance (ditunda dari `feat/finance-kantong`, 2026-08-26)
+
+Fitur Kantong (`docs/prd/finance.md` §6.5–§6.11) sudah dikirim. Yang sengaja tidak ikut:
+
+- **Ringkasan & sisa kantong tidak di-cache** — dihitung ulang tiap render (dua `SUM()` + satu
+  query alokasi lewat `Finance\Services\Pockets`). Rencana awal PRD (`monthly_finance_summaries`
+  + kolom snapshot yang dipelihara model event) dibatalkan; alasan lengkapnya di `finance.md`
+  §6.10. Pemicu untuk meninjau ulang: halaman `/finance` atau `/finance/kantong` terasa lambat
+  pada household dengan riwayat panjang — bukan sebelum itu. Pemanggilnya sudah terpusat di
+  `Pockets`, jadi menambahkan snapshot belakangan tidak menyentuh UI.
+- **Riwayat top-up tidak ditampilkan** — `budget_topups` insert-only sudah terisi, tapi user cuma
+  melihat totalnya menyatu di angka budget kantong. Tampilannya menyusul bersama analisis pola
+  lintas semester/tahun (di luar cakupan PRD).
+- **Tidak ada ubin Finance/Kantong di Beranda** — `/finance` masih diakses lewat URL langsung,
+  sama seperti sebelum fitur ini. Grid Beranda saat ini 5 ubin sesuai frame Figma.
+- **Carry-over saldo antar periode** tetap tidak ada (keputusan sadar, `finance.md` §3): tiap
+  periode kantong mulai dari alokasi baru, sisa/kurang periode lalu murni catatan historis.
 
 ## Kalender ↔ Google (ditunda dari `feat/kalender-keluarga`, 2026-08-25)
 

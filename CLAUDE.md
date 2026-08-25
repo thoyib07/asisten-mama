@@ -144,6 +144,41 @@ Groq, parsed by `AiResponseParser`, imported by `AiRecipeImporter` (dedups on `L
 `Favorite`/`Rating` are `user_id`-scoped (real accounts now — the original prototype used anonymous
 cookie/session tokens, since replaced).
 
+### Finance module
+
+A **period is not a calendar month.** `households.budget_period_reset_day` (1–28) sets when each
+period starts, so a household on payday billing runs 25 Jul–24 Aug. Every date calculation goes
+through `Finance\Services\FinancePeriod` — don't inline `startOfMonth()` anywhere. The 1–28 cap
+is what makes `addMonth()` safe (no 31st-of-February ambiguity); widening it breaks that
+invariant, not just the UI copy.
+
+A **"kantong" (pocket) is not an entity** — it's a `budget_allocations` row (household, category,
+`period_start`, amount) layered over an existing expense `Category`. Top-ups are insert-only rows
+in `budget_topups`; they never mutate `budget_allocations.amount`, so "planned" and "topped up
+mid-period" stay distinguishable. Effective budget = allocation + Σ topups.
+
+**Summaries and remaining budget are computed on read, not stored.** `docs/prd/finance.md` §6.10
+records the reversal: the original plan had `monthly_finance_summaries` plus
+`spent_amount`/`topup_total_amount` snapshot columns maintained by `Transaction` model events.
+That was dropped because `BelongsToHousehold` filters on `Auth::user()` and fails *closed*
+silently — maintaining derived totals across tables inside model events puts that exact failure
+mode (already seen in `BillSchedule::paidPeriods()`) on the write path, where drift is invisible.
+`Finance\Services\Pockets::forPeriod()` is the single read path; if this ever measurably drags,
+add caching there without touching any UI. Don't reintroduce write-path snapshots on a hunch.
+
+**`category_id` is required for expenses at the validation layer only** (`FinancePage::save()`) —
+the DB column stays nullable because income doesn't use pockets. Any *other* writer bypasses that
+check: `Bills\Services\RecordBillPayment` is the existing one. Its fallback prefers a category
+named "Tagihan" and falls back to the household's oldest expense category — and it looks that up
+with `withoutGlobalScope('household')` + an explicit `where('household_id', $bill->household_id)`,
+because the scope reads `Auth::user()` while the transaction is written as `$bill->household_id`.
+A caller outside a web session would otherwise get an empty lookup, a null category, and a
+pocket-less expense. A new cross-module writer of `Transaction` must do the same.
+
+Categories carry `is_default` (the 7 seeds — renameable, never archivable) and `archived_at`
+(a plain column, deliberately **not** Eloquent `SoftDeletes`, so archive can't be confused with
+delete). The default lock is enforced in `KantongPage::archive()`, not only by hiding the button.
+
 ### Bills module
 
 Bill due dates are never stored as rows. `bills.rrule` holds a raw RFC 5545 string, expanded on

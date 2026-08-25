@@ -46,7 +46,7 @@ class RecordBillPayment
 
             $transaction = Transaction::create([
                 'household_id' => $bill->household_id,
-                'category_id' => $bill->category_id ?? $this->defaultCategoryId(),
+                'category_id' => $bill->category_id ?? $this->defaultCategoryId($bill),
                 'user_id' => $user->id,
                 'type' => Transaction::TYPE_EXPENSE,
                 'amount' => $amount,
@@ -67,11 +67,24 @@ class RecordBillPayment
         });
     }
 
-    /** Kategori "Tagihan" adalah salah satu dari 7 kategori yang di-seed tiap household dibuat. */
-    private function defaultCategoryId(): ?int
+    /**
+     * Kategori "Tagihan" adalah salah satu dari 7 kategori yang di-seed tiap household dibuat,
+     * tapi namanya boleh diedit household (docs/prd/finance.md §6.8) — jadi pencarian by-name
+     * bisa meleset. Kalau meleset, jatuh ke kantong pengeluaran tertua, bukan null: sejak §6.6
+     * pengeluaran tanpa kantong adalah kondisi yang tidak boleh ada, dan jalur ini tidak lewat
+     * validasi FinancePage.
+     */
+    private function defaultCategoryId(Bill $bill): ?int
     {
-        return Category::where('type', Category::TYPE_EXPENSE)
-            ->where('name', 'Tagihan')
+        // withoutGlobalScope + filter eksplisit: scope household membaca Auth::user(), sementara
+        // transaksinya ditulis atas nama $bill->household_id. Pemanggil di luar sesi web (atau
+        // admin di guard lain) akan dapat query kosong -> null -> pengeluaran tanpa kantong.
+        return Category::withoutGlobalScope('household')
+            ->where('household_id', $bill->household_id)
+            ->active()
+            ->where('type', Category::TYPE_EXPENSE)
+            ->orderByRaw("case when name = 'Tagihan' then 0 else 1 end")
+            ->orderBy('id')
             ->value('id');
     }
 }
