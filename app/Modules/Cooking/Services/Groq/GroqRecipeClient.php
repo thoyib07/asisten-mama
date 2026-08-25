@@ -2,6 +2,7 @@
 
 namespace App\Modules\Cooking\Services\Groq;
 
+use App\Modules\Cooking\Services\Ai\AiRateLimitedException;
 use App\Modules\Cooking\Services\Ai\AiRecipeClient;
 use App\Modules\Cooking\Services\Ai\AiResponseParser;
 use App\Modules\Cooking\Services\Ai\RecipePrompt;
@@ -44,8 +45,12 @@ class GroqRecipeClient implements AiRecipeClient
 
         if ($response->failed()) {
             \Log::error('Groq failed', ['status' => $response->status(), 'body' => $response->body()]);
-            $msg = $response->status() === 429 ? 'Groq rate limit reached. Try again in a moment.' : 'Groq request failed: '.$response->status();
-            throw new RuntimeException($msg);
+
+            if ($response->status() === 429) {
+                throw new AiRateLimitedException('Groq rate limit reached.');
+            }
+
+            throw new RuntimeException('Groq request failed: '.$response->status());
         }
 
         $text = data_get($response->json(), 'choices.0.message.content');

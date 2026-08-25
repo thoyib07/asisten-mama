@@ -23,7 +23,12 @@ class RecipeMatcher
             return [];
         }
 
-        $query = Recipe::with('ingredients')->has('ingredients');
+        // Hanya resep yang punya minimal satu bahan yang dimiliki user. Tanpa pra-filter ini
+        // seluruh katalog (global, tumbuh terus tiap impor AI) dimuat dan dinilai di PHP tiap
+        // pencarian, lalu ikut terkirim bolak-balik lewat snapshot Livewire karena
+        // RecipeFinder::$results itu properti public.
+        $query = Recipe::with('ingredients')
+            ->whereHas('ingredients', fn ($q) => $q->whereIn('name', $have->all()));
 
         if ($mealCategories !== []) {
             $query->where(function ($q) use ($mealCategories) {
@@ -59,6 +64,10 @@ class RecipeMatcher
             }
 
             $score = $totalWeight > 0 ? round($matchedWeight / $totalWeight, 4) : 0.0;
+
+            if ($score <= 0) {
+                continue;
+            }
 
             $results[] = new MatchResult($recipe, $score, $matched, $missing);
         }

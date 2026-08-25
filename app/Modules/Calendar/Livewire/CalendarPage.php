@@ -101,7 +101,10 @@ class CalendarPage extends Component
     public function render()
     {
         $cursor = $this->cursor();
-        $gridStart = $cursor->copy()->startOfWeek(CarbonInterface::SUNDAY);
+        // Senin-dulu, cocok dengan header ['S','S','R','K','J','S','M'] di blade. Start dan end
+        // harus jadi pasangan (MONDAY/SUNDAY) — kalau keduanya SUNDAY jumlah selnya selalu
+        // 1 (mod 7) dan grid 7 kolom menyisakan satu sel yatim di baris ke-7 setiap bulan.
+        $gridStart = $cursor->copy()->startOfWeek(CarbonInterface::MONDAY);
         $gridEnd = $cursor->copy()->endOfMonth()->endOfWeek(CarbonInterface::SUNDAY);
 
         $monthEvents = Event::with('user')->between($gridStart, $gridEnd)->get();

@@ -6,6 +6,7 @@ use App\Modules\Cooking\Models\Ingredient;
 use App\Modules\Cooking\Models\Recipe;
 use App\Modules\Cooking\Support\IngredientNormalizer;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class AiRecipeImporter
 {
@@ -14,7 +15,11 @@ class AiRecipeImporter
         $name = trim($recipeData['name']);
         $normalizedName = IngredientNormalizer::normalize($name);
 
-        $exists = Recipe::whereRaw('LOWER(TRIM(name)) = ?', [$normalizedName])->exists();
+        // Sisi SQL harus dinormalisasi dengan cara yang sama dengan sisi PHP. Dulu sisi kiri cuma
+        // LOWER(TRIM(name)) — spasi ganda di tengah atau kualifikasi angka membuat "Nasi Goreng  2"
+        // tidak pernah cocok dengan hasil normalize(), jadi near-duplicate lolos ke katalog bersama.
+        $exists = Recipe::whereRaw("REGEXP_REPLACE(LOWER(TRIM(name)), '\s+', ' ', 'g') = ?", [$normalizedName])
+            ->exists();
         if ($exists) {
             return null;
         }
@@ -26,7 +31,10 @@ class AiRecipeImporter
 
         return DB::transaction(function () use ($recipeData, $name, $mealCategories, $cuisineType) {
             $recipe = Recipe::create([
-                'name' => $name,
+                // recipes.name adalah varchar(255); judul halusinasi yang kepanjangan kalau
+                // tidak dipotong akan melempar driver exception dan muncul ke user sebagai
+                // "Gagal mengambil resep AI".
+                'name' => Str::limit($name, 255, ''),
                 'steps' => $recipeData['steps'],
                 'servings' => $recipeData['servings'] ?? null,
                 'duration_minutes' => $recipeData['duration_minutes'] ?? null,

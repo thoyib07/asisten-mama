@@ -25,41 +25,63 @@ class AiResponseParser
             throw new InvalidArgumentException('No recipe list found in response.');
         }
 
-        return array_map(function ($r) {
-            if (! isset($r['name'], $r['ingredients'], $r['steps']) || ! is_array($r['ingredients']) || ! is_array($r['steps'])) {
-                throw new InvalidArgumentException('Recipe entry missing required fields.');
+        // Sumbernya probabilistik: satu entri cacat tidak boleh membuang dua entri yang baik.
+        // Dulu array_map di sini membiarkan exception dari satu resep menggagalkan seluruh respons.
+        $parsed = [];
+
+        foreach ($recipes as $r) {
+            try {
+                $parsed[] = $this->parseRecipe($r);
+            } catch (InvalidArgumentException) {
+                continue;
             }
+        }
 
-            return [
-                'name' => (string) $r['name'],
-                'ingredients' => array_values(array_map(function ($ing) {
-                    if (! is_array($ing) || ! isset($ing['name'])) {
-                        throw new InvalidArgumentException('Recipe ingredient entry missing name.');
-                    }
+        if ($parsed === []) {
+            throw new InvalidArgumentException('No usable recipe entry in response.');
+        }
 
-                    return [
-                        'name' => (string) $ing['name'],
-                        'is_primary' => (bool) ($ing['is_primary'] ?? false),
-                        'quantity' => (isset($ing['quantity']) && $ing['quantity'] !== '') ? (string) $ing['quantity'] : null,
-                    ];
-                }, $r['ingredients'])),
-                'steps' => array_values(array_map(function ($step) {
-                    $text = trim((string) (is_array($step) ? ($step['text'] ?? '') : $step));
-                    if ($text === '') {
-                        throw new InvalidArgumentException('Recipe step entry missing text.');
-                    }
+        return $parsed;
+    }
 
-                    $duration = is_array($step) && isset($step['duration_minutes']) && $step['duration_minutes'] !== null && $step['duration_minutes'] !== ''
-                        ? (int) $step['duration_minutes']
-                        : null;
+    /**
+     * @return array<string, mixed>
+     */
+    private function parseRecipe(mixed $r): array
+    {
+        if (! isset($r['name'], $r['ingredients'], $r['steps']) || ! is_array($r['ingredients']) || ! is_array($r['steps'])) {
+            throw new InvalidArgumentException('Recipe entry missing required fields.');
+        }
 
-                    return ['text' => $text, 'duration_minutes' => $duration];
-                }, $r['steps'])),
-                'servings' => isset($r['servings']) ? (int) $r['servings'] : null,
-                'duration_minutes' => (isset($r['duration_minutes']) && $r['duration_minutes'] !== '') ? (int) $r['duration_minutes'] : null,
-                'nutrition' => $this->parseNutrition($r['nutrition'] ?? null),
-            ];
-        }, $recipes);
+        return [
+            'name' => (string) $r['name'],
+            'ingredients' => array_values(array_map(function ($ing) {
+                if (! is_array($ing) || ! isset($ing['name'])) {
+                    throw new InvalidArgumentException('Recipe ingredient entry missing name.');
+                }
+
+                return [
+                    'name' => (string) $ing['name'],
+                    'is_primary' => (bool) ($ing['is_primary'] ?? false),
+                    'quantity' => (isset($ing['quantity']) && $ing['quantity'] !== '') ? (string) $ing['quantity'] : null,
+                ];
+            }, $r['ingredients'])),
+            'steps' => array_values(array_map(function ($step) {
+                $text = trim((string) (is_array($step) ? ($step['text'] ?? '') : $step));
+                if ($text === '') {
+                    throw new InvalidArgumentException('Recipe step entry missing text.');
+                }
+
+                $duration = is_array($step) && isset($step['duration_minutes']) && $step['duration_minutes'] !== null && $step['duration_minutes'] !== ''
+                    ? (int) $step['duration_minutes']
+                    : null;
+
+                return ['text' => $text, 'duration_minutes' => $duration];
+            }, $r['steps'])),
+            'servings' => isset($r['servings']) ? (int) $r['servings'] : null,
+            'duration_minutes' => (isset($r['duration_minutes']) && $r['duration_minutes'] !== '') ? (int) $r['duration_minutes'] : null,
+            'nutrition' => $this->parseNutrition($r['nutrition'] ?? null),
+        ];
     }
 
     private function parseNutrition(mixed $nutrition): ?array

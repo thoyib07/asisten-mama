@@ -62,3 +62,23 @@ it('matches recipes against any of several selected cuisine types (OR, not AND)'
     expect($ids)->not->toContain($barat->id);
     expect($ids)->not->toContain($untagged->id);
 });
+
+it('returns nothing when no recipe shares a single ingredient, so the empty state is reachable', function () {
+    makeRecipeWithIngredients('Telur Dadar', ['telur', 'garam'], primaryNames: ['telur']);
+    makeRecipeWithIngredients('Soto Ayam', ['ayam', 'kunyit'], primaryNames: ['ayam']);
+
+    // Dulu setiap resep tetap dikembalikan dengan score 0, jadi pesan "Tidak ada resep yang
+    // cukup cocok" tidak pernah muncul begitu katalog berisi apa pun.
+    expect((new RecipeMatcher)->search(['jengkol']))->toBeEmpty();
+});
+
+it('only scores recipes that share an ingredient, never the whole catalogue', function () {
+    makeRecipeWithIngredients('Telur Dadar', ['telur', 'garam'], primaryNames: ['telur']);
+    makeRecipeWithIngredients('Soto Ayam', ['ayam', 'kunyit'], primaryNames: ['ayam']);
+    makeRecipeWithIngredients('Nasi Uduk', ['santan', 'beras'], primaryNames: ['beras']);
+
+    $results = (new RecipeMatcher)->search(['telur']);
+
+    expect($results)->toHaveCount(1);
+    expect($results[0]->recipe->name)->toBe('Telur Dadar');
+});

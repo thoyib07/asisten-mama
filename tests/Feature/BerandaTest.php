@@ -6,6 +6,7 @@ use App\Modules\Bills\Services\RecordBillPayment;
 use App\Modules\Calendar\Models\Event;
 use App\Modules\ShoppingList\Models\ShoppingList;
 use App\Modules\Tasks\Models\Task;
+use Illuminate\Support\Facades\DB;
 use Livewire\Livewire;
 
 it('redirects guests away from the beranda route', function () {
@@ -92,4 +93,30 @@ it('stops counting a bill once its due occurrence is paid', function () {
     app(RecordBillPayment::class)->record($bill, now()->subDay()->toDateString(), 400000, $user);
 
     Livewire::test(Beranda::class)->assertViewHas('dueBillCount', 0);
+});
+
+it('does not run one payment query per bill when rendering the badge', function () {
+    auth()->login(makeHouseholdUser('Hesti'));
+
+    foreach (range(1, 6) as $i) {
+        Bill::create([
+            'name' => "Tagihan {$i}",
+            'starts_on' => now()->addDays($i)->toDateString(),
+            'reminder_days_before' => 2,
+        ]);
+    }
+
+    $paymentQueries = 0;
+    DB::listen(function ($query) use (&$paymentQueries) {
+        if (str_contains($query->sql, 'bill_payments')) {
+            $paymentQueries++;
+        }
+    });
+
+    Livewire::test(Beranda::class);
+
+    // Satu eager-load, bukan satu query per tagihan. BillSchedule::paidPeriods() membuat query
+    // builder baru dari relasinya, jadi eager-load saja tidak cukup — method itu harus membaca
+    // relasi yang sudah dimuat. Kalau salah satu sisi hilang, angka ini balik jadi 6.
+    expect($paymentQueries)->toBeLessThanOrEqual(1);
 });

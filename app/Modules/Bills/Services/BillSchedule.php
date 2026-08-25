@@ -77,8 +77,16 @@ class BillSchedule
         // `household_id = null` kalau tidak ada user login, yang membuat daftar lunas selalu
         // kosong dan tagihan yang sudah dibayar muncul lagi di kalender. Filter `bill_id` di
         // bawah sudah merupakan scope yang lengkap — tagihannya sendiri diambil ter-scope.
-        return $bill->payments()
-            ->withoutGlobalScope('household')
+        //
+        // Kalau relasinya sudah dimuat pemanggil, pakai koleksi itu. $bill->payments() membuat
+        // query builder baru, jadi tanpa cabang ini eager-load di pemanggil (mis. Beranda yang
+        // memanggil nextUnpaid() per tagihan) termuat tapi tidak pernah terpakai — tetap satu
+        // query per tagihan.
+        $payments = $bill->relationLoaded('payments')
+            ? $bill->getRelation('payments')
+            : $bill->payments()->withoutGlobalScope('household')->get();
+
+        return $payments
             ->pluck('period_on')
             ->map(fn ($date) => Carbon::parse($date)->toDateString())
             ->all();

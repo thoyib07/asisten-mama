@@ -4,6 +4,7 @@ namespace App\Modules\Finance\Livewire;
 
 use App\Modules\Finance\Models\Category;
 use App\Modules\Finance\Models\Transaction;
+use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -34,7 +35,15 @@ class FinancePage extends Component
     {
         $this->validate([
             'type' => 'required|in:income,expense',
-            'categoryId' => 'nullable|exists:categories,id',
+            // Rule::exists() bukan 'exists:categories,id' — rule bawaan menembak query mentah,
+            // jadi global scope BelongsToHousehold tidak berlaku dan categoryId milik household
+            // lain akan lolos. Transaksinya lalu memegang FK asing yang ikut ter-null saat
+            // household itu menghapus kategorinya (nullOnDelete).
+            'categoryId' => [
+                'nullable',
+                Rule::exists('categories', 'id')
+                    ->where('household_id', auth()->user()->current_household_id),
+            ],
             'amount' => 'required|numeric|min:0.01',
             'description' => 'nullable|string|max:255',
             'occurredOn' => 'required|date',

@@ -2,6 +2,7 @@
 
 use App\Modules\Calendar\Livewire\CalendarPage;
 use App\Modules\Calendar\Models\Event;
+use Carbon\CarbonInterface;
 use Livewire\Livewire;
 
 it('adds an event and jumps to its date', function () {
@@ -71,4 +72,20 @@ it('does not overflow short months when walked from the 31st', function () {
         ->assertSet('month', '2026-02')
         ->call('shiftMonth', 1)
         ->assertSet('month', '2026-03');
+});
+
+it('renders a whole number of week rows, with the first cell matching the first header', function () {
+    auth()->login(makeHouseholdUser('Budi'));
+
+    // Dua invarian yang dulu sama-sama salah: grid dimulai hari Minggu sementara header-nya
+    // Senin-dulu, dan start/end sama-sama Minggu sehingga jumlah sel selalu 1 (mod 7).
+    foreach (['2026-01', '2026-02', '2026-08', '2027-02'] as $month) {
+        $view = Livewire::test(CalendarPage::class)->set('month', $month)->viewData('gridStart');
+        $end = Livewire::test(CalendarPage::class)->set('month', $month)->viewData('gridEnd');
+
+        $cells = $view->diffInDays($end) + 1;
+
+        expect($cells % 7)->toBe(0, "bulan {$month} menghasilkan {$cells} sel, bukan kelipatan 7");
+        expect($view->dayOfWeek)->toBe(CarbonInterface::MONDAY, "bulan {$month} tidak mulai hari Senin");
+    }
 });

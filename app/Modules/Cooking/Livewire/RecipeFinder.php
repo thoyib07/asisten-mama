@@ -2,6 +2,7 @@
 
 namespace App\Modules\Cooking\Livewire;
 
+use App\Modules\Cooking\Services\Ai\AiRateLimitedException;
 use App\Modules\Cooking\Services\Ai\AiRecipeClient;
 use App\Modules\Cooking\Services\Ai\AiRecipeImporter;
 use App\Modules\Cooking\Services\Ai\IngredientValidator;
@@ -23,8 +24,6 @@ class RecipeFinder extends Component
     public array $results = [];
 
     public bool $searched = false;
-
-    public bool $aiLoading = false;
 
     public ?string $aiError = null;
 
@@ -91,8 +90,17 @@ class RecipeFinder extends Component
     ): void {
         $this->aiError = null;
         $this->aiNotice = null;
-        $this->aiLoading = true;
         try {
+            // Cek kuota SEBELUM loop validasi: setiap bahan yang belum ada di IngredientCatalog
+            // memicu satu panggilan Groq lewat isPlausible(), jadi kalau guard-nya belakangan
+            // user bisa menghabiskan beberapa panggilan lalu tetap ditolak karena kuota habis.
+            $quotaError = $quotaGuard->check(auth()->user()?->current_household_id);
+            if ($quotaError !== null) {
+                $this->aiError = $quotaError;
+
+                return;
+            }
+
             $plausible = collect($this->ingredients)
                 ->filter(fn ($i) => IngredientCatalog::isKnown($i) || $validator->isPlausible($i))
                 ->values();
@@ -108,23 +116,15 @@ class RecipeFinder extends Component
                 return;
             }
 
-            $quotaError = $quotaGuard->check(auth()->user()?->current_household_id);
-            if ($quotaError !== null) {
-                $this->aiError = $quotaError;
-
-                return;
-            }
-
             $suggestions = $client->suggest($plausible->all(), $this->selectedMealCategories, $this->selectedCuisineTypes);
             $importer->importMany($suggestions, $this->selectedMealCategories, $this->selectedCuisineTypes);
             $this->search($matcher);
+        } catch (AiRateLimitedException $e) {
+            report($e);
+            $this->aiError = 'AI sedang sibuk, tunggu sebentar lalu coba lagi.';
         } catch (\Throwable $e) {
             report($e);
-            $this->aiError = str_contains($e->getMessage(), 'rate limit')
-                ? 'AI sedang sibuk, tunggu sebentar lalu coba lagi.'
-                : 'Gagal mengambil resep AI. Coba lagi nanti.';
-        } finally {
-            $this->aiLoading = false;
+            $this->aiError = 'Gagal mengambil resep AI. Coba lagi nanti.';
         }
     }
 

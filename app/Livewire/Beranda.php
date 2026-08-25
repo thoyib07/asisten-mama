@@ -22,7 +22,11 @@ class Beranda extends Component
         // dengan mengekspansi rrule tiap tagihan, bukan query kolom — tanggal jatuh tempo
         // tidak disimpan sebagai baris (lihat BillSchedule).
         $soon = now()->addWeek()->toDateString();
-        $dueBillCount = Bill::active()->get()
+        // Eager-load pembayaran tanpa global scope: BillSchedule::paidPeriods() memakai relasi
+        // yang sudah dimuat kalau ada, jadi ini menghapus satu query per tagihan.
+        $dueBillCount = Bill::active()
+            ->with(['payments' => fn ($q) => $q->withoutGlobalScope('household')])
+            ->get()
             ->filter(fn (Bill $bill) => ($next = $schedule->nextUnpaid($bill, BillSchedule::lookbackFrom()))
                 && $next <= $soon)
             ->count();

@@ -46,7 +46,9 @@ class RecipeList extends Component
     public function render()
     {
         $query = Recipe::query()
-            ->when($this->search !== '', fn ($q) => $q->where('name', 'ilike', '%'.$this->search.'%'))
+            // % dan _ di-escape: tanpa ini input user diperlakukan sebagai wildcard, jadi mengetik
+            // "%" menampilkan seluruh katalog dan "_" mencocokkan karakter apa pun.
+            ->when($this->search !== '', fn ($q) => $q->where('name', 'ilike', '%'.addcslashes($this->search, '%_\\').'%'))
             ->when($this->category !== '', fn ($q) => $q->whereJsonContains('meal_categories', $this->category))
             ->when($this->onlyFavorites, fn ($q) => $q->favoritedBy(auth()->id()))
             ->orderByDesc('created_at')
