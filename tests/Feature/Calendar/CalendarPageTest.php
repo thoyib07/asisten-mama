@@ -89,3 +89,20 @@ it('renders a whole number of week rows, with the first cell matching the first 
         expect($view->dayOfWeek)->toBe(CarbonInterface::MONDAY, "bulan {$month} tidak mulai hari Senin");
     }
 });
+
+it('shows the personal feed url and revokes it on regenerate', function () {
+    $owner = makeHouseholdUser('Budi');
+    auth()->login($owner);
+
+    $component = Livewire::test(CalendarPage::class)->set('showConnect', true);
+    $token = $owner->fresh()->calendar_token;
+
+    expect($token)->not->toBeNull();
+    $component->assertSee(route('kalender.feed', ['token' => $token]), escape: false);
+
+    $component->call('regenerateCalendarUrl');
+
+    // Alamat lama harus lenyap dari halaman begitu dicabut, bukan cuma berhenti berfungsi.
+    expect($owner->fresh()->calendar_token)->not->toBe($token);
+    $component->assertDontSee(route('kalender.feed', ['token' => $token]), escape: false);
+});

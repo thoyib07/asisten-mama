@@ -39,7 +39,7 @@
                 <p class="text-ink-soft text-xs">
                     Ayah dan ibu masing-masing menambahkan alamat ini sekali di akun Google mereka —
                     hasilnya kalender baru, bukan masuk ke kalender keluarga yang sudah ada.
-                    Perubahan menyusul dalam 8–24 jam; jadwalnya ditentukan Google dan tidak bisa dipercepat.
+                    Perubahan menyusul dalam 12–24 jam; jadwalnya ditentukan Google dan tidak bisa dipercepat.
                 </p>
 
                 <button type="button" wire:click="regenerateCalendarUrl"

@@ -169,6 +169,35 @@ bills in the calendar. There is a dedicated unauthenticated test for it.
 `RecordBillPayment` writes a `Transaction` into Finance when a bill is marked paid — one-way
 Bills → Finance, the same shape as `MissingIngredientsToShoppingList`.
 
+### Calendar module
+
+The family calendar reaches Google the same way Bills does — an **ICS subscription feed**, not the
+Calendar API. The broad write scopes (`calendar`, `calendar.events`) are *sensitive*: verification
+plus a hard, permanent 100-user cap per Cloud project while unverified. `calendar.app.created` is
+narrower ("secondary calendars this app made") and **its classification is unverified** — check the
+sensitivity column in the Cloud Console scope picker before planning anything on top of it.
+Google Tasks doesn't fit the "assign a task to a family member" half either: task lists have no
+account-to-account sharing and no assignee field (assignment exists only via Chat spaces / Docs,
+neither of which this app has).
+
+**The token is per `User`, not per `Household`** (`users.calendar_token`, distinct from
+`households.calendar_token` which belongs to Bills). Deliberate: one feed carries the whole
+household's agenda *plus only the token holder's own tasks*, so members' task lists don't pile up in
+each other's calendars. `FamilyIcsFeed::forUser()` is the single entry point; `App\Support\Ics`
+holds the RFC 5545 escaping/folding shared with `Bills\Services\IcsFeed`.
+
+`/kalender/{token}.ics` **runs without a session**, exactly like the Bills feed — same trap, same
+rule: every read there uses `withoutGlobalScope('household')` plus an explicit `household_id`
+filter, and it fails silently (empty feed), not loudly.
+
+Timed events are emitted as **floating local time** (`DTSTART:20260825T090000` — no `Z`, no
+`TZID`). `app.timezone` is UTC while users type local wall-clock time, so stamping `Z` would shift
+every event 7 hours in Google. Switch to `TZID` only alongside a per-household timezone column.
+
+Google refreshes subscribed feeds roughly every 12–24 hours, with no way to force it. The
+subscription panel on `/kalender` says so out loud — a user expecting today's task to appear today
+will file it as a bug otherwise.
+
 ### Shopping List ↔ Cooking integration
 
 `MissingIngredientsToShoppingList` takes `MatchResult::$missing` and adds each to the household's

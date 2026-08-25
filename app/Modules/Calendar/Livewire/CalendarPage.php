@@ -19,6 +19,8 @@ class CalendarPage extends Component
 
     public bool $adding = false;
 
+    public bool $showConnect = false;
+
     public string $title = '';
 
     public ?int $userId = null;
@@ -86,6 +88,11 @@ class CalendarPage extends Component
         Event::where('id', $eventId)->delete();
     }
 
+    public function regenerateCalendarUrl(): void
+    {
+        auth()->user()->regenerateCalendarToken();
+    }
+
     private function cursor(): Carbon
     {
         // Hari & jam ditulis eksplisit: createFromFormat('Y-m', ...) mengisi bagian yang hilang
@@ -122,6 +129,7 @@ class CalendarPage extends Component
                 ->filter(fn ($e) => $e->starts_at->toDateString() === $this->selected)
                 ->sortBy('starts_at')->values(),
             'members' => auth()->user()->currentHousehold->users,
+            'feedUrl' => route('kalender.feed', ['token' => auth()->user()->calendarToken()]),
         ]);
     }
 }

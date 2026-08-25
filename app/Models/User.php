@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Str;
 
 #[Fillable(['name', 'email', 'password'])]
 #[Hidden(['password', 'remember_token'])]
@@ -38,11 +39,38 @@ class User extends Authenticatable implements FilamentUser
         return $this->belongsTo(Household::class, 'current_household_id');
     }
 
+    /**
+     * Token feed ICS pribadi, dibuat saat pertama kali dibutuhkan supaya user lama tidak perlu
+     * migration data — pola yang sama dengan Household::calendarToken().
+     */
+    public function calendarToken(): string
+    {
+        if (! $this->calendar_token) {
+            $this->forceFill(['calendar_token' => static::generateUniqueCalendarToken()])->save();
+        }
+
+        return $this->calendar_token;
+    }
+
+    public function regenerateCalendarToken(): void
+    {
+        $this->forceFill(['calendar_token' => static::generateUniqueCalendarToken()])->save();
+    }
+
     public function avatarColorClass(): string
     {
         $classes = ['avatar-1', 'avatar-2', 'avatar-3', 'avatar-4', 'avatar-5', 'avatar-6'];
 
         return $classes[$this->id % count($classes)];
+    }
+
+    private static function generateUniqueCalendarToken(): string
+    {
+        do {
+            $token = Str::random(48);
+        } while (static::where('calendar_token', $token)->exists());
+
+        return $token;
     }
 
     /**

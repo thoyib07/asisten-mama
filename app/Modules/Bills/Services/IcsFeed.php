@@ -4,6 +4,7 @@ namespace App\Modules\Bills\Services;
 
 use App\Models\Household;
 use App\Modules\Bills\Models\Bill;
+use App\Support\Ics;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 
@@ -38,7 +39,7 @@ class IcsFeed
             'PRODID:-//asisten-mama//Tagihan//ID',
             'CALSCALE:GREGORIAN',
             'METHOD:PUBLISH',
-            'X-WR-CALNAME:'.$this->escape('Tagihan '.$household->name),
+            'X-WR-CALNAME:'.Ics::escape('Tagihan '.$household->name),
         ];
 
         foreach ($this->billsFor($household) as $bill) {
@@ -49,7 +50,7 @@ class IcsFeed
 
         $lines[] = 'END:VCALENDAR';
 
-        return implode("\r\n", array_map($this->fold(...), $lines))."\r\n";
+        return Ics::document($lines);
     }
 
     /**
@@ -81,12 +82,12 @@ class IcsFeed
             'DTSTART;VALUE=DATE:'.$remindOn->format('Ymd'),
             // Akhir all-day event bersifat eksklusif — sehari setelahnya = acara sehari penuh.
             'DTEND;VALUE=DATE:'.$remindOn->copy()->addDay()->format('Ymd'),
-            'SUMMARY:'.$this->escape($this->summary($bill, $due)),
+            'SUMMARY:'.Ics::escape($this->summary($bill, $due)),
             'TRANSP:TRANSPARENT',
         ];
 
         if ($bill->notes) {
-            $lines[] = 'DESCRIPTION:'.$this->escape($bill->notes);
+            $lines[] = 'DESCRIPTION:'.Ics::escape($bill->notes);
         }
 
         // Bonus kalau Google menghormatinya di feed langganan; fitur ini tidak bergantung
@@ -94,7 +95,7 @@ class IcsFeed
         $lines[] = 'BEGIN:VALARM';
         $lines[] = 'TRIGGER:PT9H';
         $lines[] = 'ACTION:DISPLAY';
-        $lines[] = 'DESCRIPTION:'.$this->escape($bill->name);
+        $lines[] = 'DESCRIPTION:'.Ics::escape($bill->name);
         $lines[] = 'END:VALARM';
         $lines[] = 'END:VEVENT';
 
@@ -111,39 +112,5 @@ class IcsFeed
         }
 
         return $summary;
-    }
-
-    /** Escape nilai TEXT (RFC 5545 §3.3.11). Backslash harus lebih dulu. */
-    private function escape(string $value): string
-    {
-        return str_replace(
-            ['\\', ';', ',', "\r\n", "\n", "\r"],
-            ['\\\\', '\;', '\,', '\n', '\n', '\n'],
-            $value
-        );
-    }
-
-    /**
-     * Lipat baris di 75 oktet (RFC 5545 §3.1). Dihitung per karakter UTF-8, bukan per byte —
-     * melipat di tengah karakter multi-byte menghasilkan teks rusak di sisi Google.
-     */
-    private function fold(string $line): string
-    {
-        $folded = '';
-        $octets = 0;
-
-        foreach (preg_split('//u', $line, -1, PREG_SPLIT_NO_EMPTY) as $char) {
-            $size = strlen($char);
-
-            if ($octets + $size > 75) {
-                $folded .= "\r\n ";
-                $octets = 1; // spasi kelanjutan ikut menghabiskan jatah baris berikutnya
-            }
-
-            $folded .= $char;
-            $octets += $size;
-        }
-
-        return $folded;
     }
 }

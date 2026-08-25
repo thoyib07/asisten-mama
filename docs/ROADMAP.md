@@ -90,5 +90,31 @@ polos tanpa plugin sudah cukup: titik penegakannya cuma segelintir method di res
   belum dibeli sampai ada kolom harga.
 - **Preferensi notifikasi** — baris toggle ada di frame Profil, belum ada penyimpanannya.
 
+## Kalender ↔ Google (ditunda dari `feat/kalender-keluarga`, 2026-08-25)
+
+Yang dikirim sekarang: feed ICS per-anggota (`/kalender/{token}.ics`), satu arah, tanpa OAuth.
+Sengaja tidak dikerjakan, beserta pemicunya:
+
+- **Sync dua arah lewat Google Calendar API.** Semua scope tulis Calendar tergolong *sensitive* →
+  verifikasi app + cap 100 user permanen per Cloud project selama belum lolos. Scope yang lebih
+  sempit `calendar.app.created` ("bikin kalender sekunder + kelola event di dalamnya") **belum
+  diverifikasi klasifikasinya** — cek kolom sensitivitas di scope picker Cloud Console sebelum
+  merencanakan apa pun di atasnya. Selain itu tidak ada cron di app ini, jadi pull dari Google
+  harus dipicu on-request.
+- **Notifikasi real-time.** Google menyegarkan feed langganan 12–24 jam sekali dan tidak bisa
+  dipercepat, jadi tugas untuk hari yang sama tidak akan keburu sampai. Pemicunya: keluhan nyata
+  soal tugas mendadak. Kandidat termurah = Web Push lewat service worker PWA yang sudah ada
+  (butuh VAPID key + tabel subscription), bukan OAuth Google.
+- **Tugas tanpa `due_on` dan tugas yang sudah selesai** tidak masuk feed — ICS wajib punya tanggal,
+  dan tugas selesai hanya jadi sampah visual (perlu diingat: karena refresh lambat, tugas yang baru
+  dicentang masih nangkring di Google sampai fetch berikutnya).
+- **Tugas tanpa penanggung jawab** tidak muncul di feed siapa pun. Kalau ternyata dipakai sebagai
+  "pengingat kolektif", masukkan ke feed semua anggota. Awas: `->orWhereNull('user_id')` polos di rantai query
+  itu jadi `... AND ... OR user_id IS NULL` (OR mengikat lebih longgar dari AND) dan
+  membocorkan tugas tanpa penanggung jawab dari **semua** household lewat endpoint tanpa
+  auth. Wajib dibungkus: `->where(fn ($q) => $q->where('user_id', $user->id)->orWhereNull('user_id'))`.
+- **Anggota sebagai attendee Google** mustahil tanpa OAuth (service account butuh Domain-Wide
+  Delegation = Workspace berbayar). Karena itu nama penanggung jawab ditempel di judul event.
+
 ## Billing
 - Belum ada infrastruktur billing/subscription (Stripe/Cashier) — di luar cakupan MVP zero-budget.

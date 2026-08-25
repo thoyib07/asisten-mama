@@ -14,6 +14,66 @@
         </div>
     </div>
 
+    {{-- Panel langganan kalender. Batasannya disebut apa adanya: ekspektasi keliru di sini
+         (mengira update-nya langsung, atau mengira URL-nya sama untuk semua anggota) akan
+         dilaporkan sebagai bug padahal perilaku Google / desain feed. --}}
+    <div class="card mt-4 p-5">
+        <button type="button" wire:click="$toggle('showConnect')"
+                class="flex w-full items-center justify-between gap-3 text-left"
+                aria-expanded="{{ $showConnect ? 'true' : 'false' }}">
+            <span class="flex items-center gap-2 font-bold">
+                <svg class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+                     stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M4 6.75A1.75 1.75 0 0 1 5.75 5h12.5A1.75 1.75 0 0 1 20 6.75v12.5A1.75 1.75 0 0 1 18.25 21H5.75A1.75 1.75 0 0 1 4 19.25zM4 10h16M8 3v4M16 3v4" />
+                </svg>
+                Hubungkan ke Google Calendar
+            </span>
+            <span class="text-ink-soft text-xs">{{ $showConnect ? 'Tutup' : 'Buka' }}</span>
+        </button>
+
+        @if ($showConnect)
+            <div class="mt-4 space-y-3 text-sm">
+                <ol class="list-decimal space-y-1 pl-5 text-ink-soft">
+                    <li>Buka Google Calendar di komputer.</li>
+                    <li>Di panel kiri: <strong>Kalender lain</strong> &rarr; <strong>Dari URL</strong>.</li>
+                    <li>Tempel alamat di bawah, lalu <strong>Tambahkan kalender</strong>.</li>
+                </ol>
+
+                <input
+                    type="text"
+                    value="{{ $feedUrl }}"
+                    readonly
+                    onfocus="this.select()"
+                    aria-label="Alamat feed kalender keluarga"
+                    class="w-full rounded-full border border-rule bg-app px-4 py-2.5 font-mono text-xs text-ink"
+                >
+
+                <p class="text-ink-soft text-xs">
+                    <strong>Alamat ini pribadi</strong> &mdash; isinya seluruh agenda keluarga ditambah
+                    tugas yang ditugaskan ke kamu saja. Tiap anggota punya alamatnya sendiri, ambil dari
+                    halaman ini setelah login masing-masing.
+                </p>
+
+                <p class="text-ink-soft text-xs">
+                    Hasilnya <strong>kalender baru</strong> di akun Google-mu, bukan acara yang masuk ke
+                    kalender yang sudah ada &mdash; jadi bisa dimatikan atau diberi warna sendiri.
+                </p>
+
+                <p class="text-ink-soft text-xs">
+                    Google menyegarkan kalender langganan sekitar 12&ndash;24 jam sekali dan tidak bisa
+                    dipercepat, jadi tugas untuk <strong>hari ini</strong> belum tentu keburu muncul di sana.
+                    Untuk yang mendadak, tetap andalkan aplikasi ini.
+                </p>
+
+                <button type="button" wire:click="regenerateCalendarUrl"
+                        wire:confirm="Alamat lama langsung berhenti berfungsi dan kamu harus berlangganan ulang di tiap perangkat. Lanjutkan?"
+                        class="bg-app rounded-full border border-rule px-4 py-2 text-xs font-bold text-ink-soft">
+                    Ganti alamat (cabut akses lama)
+                </button>
+            </div>
+        @endif
+    </div>
+
     <div class="card mt-4 p-4">
         <div class="grid grid-cols-7 text-center text-xs font-semibold text-ink-soft">
             @foreach (['S', 'S', 'R', 'K', 'J', 'S', 'M'] as $header)
