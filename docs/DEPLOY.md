@@ -54,7 +54,12 @@ and it doubles as the recovery path if every admin is ever lost. **Delete `ADMIN
 Render dashboard once the account exists.**
 
 ### 4. Verify Deploy
-- `/` — redirects a guest to `/login`.
+- `/` — a guest sees the Beranda shell itself (tile grid, zero counts, "Belum ada apa-apa di
+  sini." + Masuk/Daftar), not a redirect and not a separate marketing page.
+- `/resep` and `/resep/{id}` — open to a guest; no favourite button, no rating, no FAB, no tabs.
+- `/resep/bahan` — must still 302 to `/login` for a guest. This is the AI-quota boundary
+  (`docs/prd/cooking.md` §7.4); if it ever returns 200 to a guest, anonymous visitors can drain
+  the Groq quota.
 - `/register` — sign up, confirm redirect into Beranda with a working household-scoped session.
 - `/shopping-list`, `/finance`, `/akun` — accessible once logged in, empty-state renders correctly.
 - `/manifest.json` — valid JSON; try "Add to Home Screen" on mobile.

@@ -11,8 +11,11 @@ beforeEach(function () {
     config()->set('services.groq.model', 'test-model');
 });
 
-it('requires authentication to reach the recipe pages', function () {
-    $this->get('/resep')->assertRedirect('/login');
+// Katalog resep sengaja dibuka untuk tamu (cicipan produk), TAPI halaman pencarian bahan tidak:
+// di situlah tombol "Eksplor dengan AI" berada, dan pengunjung anonim melewati cap kuota
+// per-household di AiQuotaGuard karena current_household_id-nya null. Batas inilah yang dijaga.
+it('keeps the AI-powered ingredient search behind login while the catalogue stays public', function () {
+    $this->get('/resep')->assertOk();
     $this->get('/resep/bahan')->assertRedirect('/login');
 });
 

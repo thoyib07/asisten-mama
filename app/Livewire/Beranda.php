@@ -16,6 +16,29 @@ class Beranda extends Component
 {
     public function render(BillSchedule $schedule)
     {
+        // Tamu melihat Beranda yang sama, bukan halaman pemasaran terpisah — itulah "mencicipi
+        // aplikasinya". Yang beda cuma isinya: nol apa adanya, tanpa satu pun angka karangan.
+        // Wajib dicabang sebelum query di bawah, yang semuanya mengasumsikan ada user login
+        // (`auth()->user()->currentHousehold` bernilai null untuk tamu).
+        //
+        // `newRecipeCount` tetap angka sungguhan: katalog resep global/shared, bukan
+        // household-scoped, jadi itu memang data yang boleh dilihat tamu — dan Resep satu-satunya
+        // ubin yang benar-benar bisa mereka buka.
+        if (! auth()->check()) {
+            return view('livewire.beranda', [
+                'greeting' => 'Selamat datang 👋',
+                'members' => collect(),
+                'newRecipeCount' => Recipe::where('created_at', '>=', now()->subDays(7))->count(),
+                'pendingShoppingCount' => 0,
+                'dueBillCount' => 0,
+                'todayEventCount' => 0,
+                'pendingTaskCount' => 0,
+                'taskProgress' => 0,
+                'nextTask' => null,
+                'nextEvent' => null,
+            ]);
+        }
+
         $household = auth()->user()->currentHousehold()->with('users')->first();
 
         // Lencana ubin Tagihan: yang sudah telat + yang jatuh tempo dalam sepekan. Dihitung

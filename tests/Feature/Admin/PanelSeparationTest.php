@@ -68,8 +68,10 @@ it('sends an admin to the admin panel after logging in, and keeps the session on
     $this->actingAs($admin, 'admin')->get('/backoffice/recipes')->assertOk();
 });
 
-it('lets a guest reach the customer auth pages but not Beranda', function () {
-    $this->get('/')->assertRedirect('/login');
+it('lets a guest reach the customer auth pages and the landing page', function () {
+    // `/` tidak lagi memantulkan tamu ke login: Beranda mencabang sendiri jadi halaman
+    // perkenalan. Yang dijaga di sini cuma pemisahan panel — isi halamannya diuji di BerandaTest.
+    $this->get('/')->assertOk();
     $this->get('/login')->assertOk();
     $this->get('/register')->assertOk();
 });

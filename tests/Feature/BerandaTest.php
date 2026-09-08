@@ -9,8 +9,18 @@ use App\Modules\Tasks\Models\Task;
 use Illuminate\Support\Facades\DB;
 use Livewire\Livewire;
 
-it('redirects guests away from the beranda route', function () {
-    $this->get('/')->assertRedirect();
+it('shows guests the beranda shell with an empty state instead of household data', function () {
+    $response = $this->get('/');
+
+    $response->assertOk()
+        ->assertSee('Selamat datang')
+        ->assertSee('Belum ada apa-apa di sini.')
+        ->assertSee('Daftar gratis');
+
+    // Sapaan bernama, kartu agenda, dan kartu tugas cuma untuk anggota keluarga.
+    $response->assertDontSee('Halo,')
+        ->assertDontSee('Acara Terdekat')
+        ->assertDontSee('Tugas Hari Ini');
 });
 
 it('only counts pending shopping items from the current household', function () {

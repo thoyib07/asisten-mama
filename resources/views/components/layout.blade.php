@@ -6,6 +6,18 @@
     <title>Asisten Mama</title>
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#00B14F">
+    {{-- Kartu pratinjau saat tautannya dibagikan (WhatsApp, dsb). Halaman customer ada di
+         belakang login, jadi yang benar-benar terpakai cuma tautan publik: /, /resep,
+         /resep/{id}. Tanpa ini, tautan yang disebar untuk pemasaran muncul tanpa keterangan. --}}
+    @php $ogDescription = 'Resep, daftar belanja, jadwal, tugas, tagihan, dan uang belanja — dipakai bareng satu keluarga.'; @endphp
+    <meta name="description" content="{{ $ogDescription }}">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Asisten Mama">
+    <meta property="og:title" content="Asisten Mama">
+    <meta property="og:description" content="{{ $ogDescription }}">
+    <meta property="og:url" content="{{ url()->current() }}">
+    <meta property="og:image" content="{{ url('/images/icon-512.png') }}">
+    <meta name="twitter:card" content="summary">
     {{-- @fonts memuat @font-face Figtree yang di-self-host oleh bunny() di vite.config.js.
          Tanpa direktif ini font-nya ikut ter-build tapi tidak pernah dipakai — app diam-diam
          jatuh ke font sistem (kondisi Instrument Sans sebelumnya). --}}
@@ -20,6 +32,24 @@
         {{ $slot }}
     </main>
 
+    {{-- Tamu tidak mendapat nav bawah: keempat slotnya butuh login, jadi tiap tombolnya cuma
+         akan memantul ke halaman masuk. Yang ditaruh di posisi yang sama: ajakan mendaftar. --}}
+    @guest
+        <div class="fixed bottom-0 left-1/2 z-10 w-full max-w-[430px] -translate-x-1/2 border-t border-rule bg-surface-alt">
+            <div class="flex items-center gap-2 px-6 pb-3 pt-3">
+                <a href="{{ route('filament.app.auth.login') }}"
+                   class="bg-app flex-1 rounded-full border border-rule py-3 text-center text-sm font-bold text-ink-soft">
+                    Masuk
+                </a>
+                <a href="{{ route('filament.app.auth.register') }}"
+                   class="bg-accent flex-1 rounded-full py-3 text-center text-sm font-bold text-white">
+                    Daftar gratis
+                </a>
+            </div>
+        </div>
+    @endguest
+
+    @auth
     @php
         // Aturan state aktif nav (docs/ui-design.md §5.2): slot menyala hanya untuk route miliknya
         // sendiri. Pengecualian tunggal: /tugas menyalakan Kalender (satu pasangan agenda keluarga).
@@ -59,6 +89,7 @@
             @endforeach
         </div>
     </nav>
+    @endauth
 
     @livewireScripts
     <script>

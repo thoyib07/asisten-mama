@@ -14,7 +14,9 @@
         ];
     @endphp
 
-    <x-brand-bar>
+    {{-- "Keluarga" ditujukan ke orang yang sudah memakai aplikasinya; pengunjung pertama kali
+         belum tahu ini aplikasi apa, jadi mereka melihat nama produknya. --}}
+    <x-brand-bar :name="auth()->check() ? 'Keluarga' : 'Asisten Mama'">
         <button type="button" class="text-ink-soft" aria-label="Notifikasi">
             <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
                  stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -56,6 +58,23 @@
             />
         @endforeach
     </div>
+
+    {{-- Kartu Acara Terdekat & Tugas Hari Ini mengandaikan ada keluarga di baliknya: untuk tamu
+         keduanya cuma akan berbunyi "semua tugas beres", yang menyesatkan karena tugasnya memang
+         belum pernah ada. Diganti satu keadaan kosong yang jujur + ajakan masuk. --}}
+    @guest
+        <div class="card mt-6 p-6 text-center">
+            <p class="font-bold">Belum ada apa-apa di sini.</p>
+            <p class="text-ink-soft mt-1 text-sm leading-relaxed">
+                Masuk untuk mulai memakainya — acara, tugas, belanja, dan catatan keuangan
+                keluarga muncul di halaman ini.
+            </p>
+            <a wire:navigate href="{{ route('recipes.index') }}"
+               class="bg-tint text-accent mt-4 inline-block rounded-full px-5 py-2.5 text-sm font-bold">
+                Lihat resep dulu, tanpa daftar
+            </a>
+        </div>
+    @else
 
     <div class="mt-6 flex items-center justify-between">
         <h2 class="text-base font-bold">Acara Terdekat</h2>
@@ -113,4 +132,5 @@
             </span>
         </span>
     </a>
+    @endguest
 </div>

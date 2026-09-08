@@ -1,5 +1,10 @@
 {{-- Brand bar per-halaman (docs/ui-design.md §5.1). Hanya dipakai di Beranda & Buku Resep,
-     sesuai frame — halaman lain langsung mulai dengan judulnya. Slot untuk ikon aksi kanan. --}}
+     sesuai frame — halaman lain langsung mulai dengan judulnya. Slot untuk ikon aksi kanan.
+
+     `name` default "Keluarga" mengikuti frame Figma: kata itu ditujukan ke orang yang sudah
+     memakai aplikasinya. Halaman perkenalan untuk tamu mengoper nama produknya, karena
+     pengunjung pertama kali belum tahu ini aplikasi apa. --}}
+@props(['name' => 'Keluarga'])
 <div class="flex items-center justify-between">
     <span class="flex items-center gap-2">
         <span class="bg-accent flex h-8 w-8 items-center justify-center rounded-xl text-white">
@@ -8,7 +13,7 @@
                 <path d="M3 10.5 12 3l9 7.5M5.25 9.75V21h13.5V9.75" />
             </svg>
         </span>
-        <span class="text-accent text-lg font-extrabold">Keluarga</span>
+        <span class="text-accent text-lg font-extrabold">{{ $name }}</span>
     </span>
     {{ $slot }}
 </div>

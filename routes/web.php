@@ -4,7 +4,9 @@ use App\Livewire\Akun;
 use App\Livewire\Beranda;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', Beranda::class)->middleware('auth')->name('beranda');
+// Tanpa `auth`: Beranda sendiri yang mencabang — tamu dapat halaman perkenalan, anggota
+// keluarga dapat Beranda seperti biasa. Satu URL, supaya `start_url` PWA tetap `/`.
+Route::get('/', Beranda::class)->name('beranda');
 Route::get('/akun', Akun::class)->middleware('auth')->name('akun');
 
 // Bookmark & tautan yang beredar dari sebelum panel dipisah: /admin dulunya halaman login &

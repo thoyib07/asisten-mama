@@ -135,6 +135,38 @@ Each module has its own `{Module}ServiceProvider` (registered in `bootstrap/prov
 `Household`, `User`, `BelongsToHousehold` stay in plain `app/Models` / `app/Support/Concerns` —
 cross-cutting infra, not a feature module.
 
+### Guest boundary
+
+`/` is **not** behind `auth`. A guest gets **the Beranda page itself**, not a separate marketing
+page — seeing the real home screen is the point. `App\Livewire\Beranda::render()` branches on
+`auth()->check()` and returns the same `livewire.beranda` view with neutral values, before any
+household query runs (`auth()->user()->currentHousehold` is null for a guest). No count is
+invented: they are all literal zeros, except `newRecipeCount`, which stays real because the recipe
+catalogue is global rather than household-scoped.
+
+`beranda.blade.php` drops the "Acara Terdekat" and "Tugas Hari Ini" cards under `@guest` — with
+zero data they read "Semua tugas beres", which is false for someone who has no tasks yet — and
+shows one empty state plus the CTA instead. A separate `/` + `/beranda` split was rejected:
+`manifest.json` has `start_url: "/"` and `sw.js` caches `/` in its app shell, so moving Beranda
+would make an installed PWA cold-start somewhere else.
+
+`components/layout.blade.php` swaps the bottom bar: the four-slot nav renders only under `@auth`
+(every slot needs a session), and a guest gets Masuk/Daftar buttons in the same position.
+
+Public: `/`, `/resep`, `/resep/{recipe}` — plus the two token ICS feeds, `manifest.json`, `sw.js`,
+`/up`, and the legacy redirects. **Everything else requires auth**, and two of those are load-bearing:
+
+- `/resep/bahan` (`RecipeFinder`) hosts "Eksplor dengan AI", which calls Groq and writes to the
+  global recipe catalogue. An anonymous visitor has a null `current_household_id`, so
+  `AiQuotaGuard`'s per-household cap does not apply and the quota can be drained. This was open
+  once and closed by `d8a4741`; `tests/Feature/PageRendersTest.php` guards it.
+- Route order still matters: `/resep/bahan` must be declared **before** `/resep/{recipe}` or the
+  wildcard swallows it. They no longer share a middleware group, so nothing enforces that but the
+  declaration order in `Cooking/routes/web.php`.
+
+Guest-visible views must gate anything needing a session: favourite/rating (`@auth` in
+`recipe-list.blade.php` and `recipes/show.blade.php`), the `/resep/bahan` FAB and tabs.
+
 ### Cooking module
 
 `RecipeMatcher::search()` (`Services/Matching`) scores every recipe by matched/total ingredients

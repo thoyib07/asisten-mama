@@ -1,12 +1,14 @@
 <div>
     @unless ($lockFavoritesFilter)
         <x-brand-bar>
-            <a wire:navigate href="{{ route('favorites.index') }}" class="text-ink-soft" aria-label="Resep favorit">
-                <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
-                     stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <path d="M12 20s-7-4.35-7-9a4 4 0 0 1 7-2.65A4 4 0 0 1 19 11c0 4.65-7 9-7 9" />
-                </svg>
-            </a>
+            @auth
+                <a wire:navigate href="{{ route('favorites.index') }}" class="text-ink-soft" aria-label="Resep favorit">
+                    <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+                         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M12 20s-7-4.35-7-9a4 4 0 0 1 7-2.65A4 4 0 0 1 19 11c0 4.65-7 9-7 9" />
+                    </svg>
+                </a>
+            @endauth
         </x-brand-bar>
 
         <header class="mt-5">
@@ -14,9 +16,11 @@
             <p class="text-sm text-ink-soft">Temukan dan masak hidangan favorit keluarga.</p>
         </header>
 
-        <div class="mt-4">
-            <x-resep-tabs />
-        </div>
+        @auth
+            <div class="mt-4">
+                <x-resep-tabs />
+            </div>
+        @endauth
     @else
         <h1 class="text-2xl font-extrabold">Resep Favorit</h1>
         <p class="text-sm text-ink-soft">Resep yang Anda tandai.</p>
@@ -90,7 +94,11 @@
         </button>
     @endif
 
+    {{-- Tamu tidak melihat FAB ini: tujuannya /resep/bahan yang ada di belakang `auth`, jadi
+         satu-satunya efeknya cuma memantulkan mereka ke halaman masuk. --}}
     @unless ($lockFavoritesFilter)
-        <x-fab label="Cari resep dari bahan" onclick="window.location='{{ route('cooking.cari') }}'" />
+        @auth
+            <x-fab label="Cari resep dari bahan" onclick="window.location='{{ route('cooking.cari') }}'" />
+        @endauth
     @endunless
 </div>
